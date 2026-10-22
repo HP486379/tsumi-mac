@@ -67,7 +67,8 @@ npm run test:e2e
 `npm run build` は、JavaScript・CSS・アイコンをすべて内包した **`dist/preview.html`** も生成します。単体ファイルのプレビューやダウンロードにはこちらを使用します。外部ファイルの読み込みは不要です。
 
 `main` へのpushで `.github/workflows/pages.yml` が検証・ビルドし、GitHub Pagesへ公開します。公開先はGitHub ActionsのDeploy出力とリポジトリのDeploymentsで確認してください。
-Pagesが無効な場合は初期有効化も試みます。組織ポリシーや権限で拒否された場合は、リポジトリの **Settings → Pages → Source: GitHub Actions** を選択し、ワークフローを再実行してください。
+初回はリポジトリの **Settings → Pages → Source: GitHub Actions** を選択し、ワークフローを実行してください。GitHub Actionsの標準トークンではPagesの初期有効化が拒否されるため、管理者による設定が必要です。
+Pagesの設定前でもビルドジョブは実行できます。ワークフローのArtifactsにある `tsumi-mac-standalone-preview` から単体HTMLを取得できます。
 ビルドのアセットURLは相対パスなので `/tsumi-mac/` 配下でも動作します。
 
 `npm run test:e2e` は本番ビルド後に実行し、通常のPC・スマホ操作に加えて、単体HTMLファイルとsandbox付きiframeでゲームを開始・操作できることを検証します。

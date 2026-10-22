@@ -22,9 +22,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/configure-pages@v5
+      - uses: actions/upload-artifact@v4
         with:
-          enablement: true
+          name: tsumi-mac-standalone-preview
+          path: dist/preview.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -35,6 +36,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/configure-pages@v5
       - name: Deploy game
         id: deployment
         uses: actions/deploy-pages@v4
