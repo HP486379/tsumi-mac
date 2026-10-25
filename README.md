@@ -1,93 +1,65 @@
-# 積みMac — STACK YOUR MAC 🍎
+# 積みMac — STACK YOUR MAC
 
-**買って満足。積んで絶望。**
+> 買って満足。積んで絶望。
 
-Mac風の架空デバイスを積み上げる、**2D物理演算 × 落ち物パズル**。重さ・摩擦・重心で積み方が変わり、列を揃えると「資産整理」が発動します。
+Mac風デバイスを積み上げる、物理演算付き2D落ち物パズル（Vite + React + TypeScript strict + Matter.js + Canvas）。
 
-## ゲームの特徴
-- 落下・衝突・傾斜・崩壊を2D物理演算で表現
-- 機器の大きさと重量が異なる5種類のブロック
-- 10列×18行の仮想グリッドで列消しを判定
-- 散財総額・整理額・積みMac指数を記録
-- PC・スマホ両対応、N100クラスのPCでも遊べる軽量設計
-
-## 技術スタック
-Vite / React / TypeScript / Matter.js / HTML Canvas / Vitest / Playwright
-
-## 開発仕様
-詳細は [docs/SPEC.md](docs/SPEC.md) を参照。
-
-## 起動
-
-Node.js 24 LTS と npm を使用します。サーバー・APIキーは不要です。
+## 起動方法
 
 ```bash
-npm ci
-npm run dev
+npm install
+npm run dev          # http://localhost:5173 （同一LANのスマホからは表示されたNetwork URLへ）
+npm test             # Vitest 単体・統合テスト
+npm run build        # tsc -b && vite build → dist/
+npm run preview      # 本番ビルドの確認 http://localhost:4173
+npx playwright install chromium   # 初回のみ
+npm run test:e2e     # Playwright（desktop-chromium / mobile-chromium[Pixel 7]）
 ```
 
-本番用は `npm run build` で `dist/` に生成されます。`npm run preview` で生成物を確認できます。
-開発サーバーは `0.0.0.0:5173`、本番プレビューサーバーは `0.0.0.0:4173` に固定しています。使用中の場合は別ポートへ自動変更せずエラーになります。
-クラウド環境でホームディレクトリへ書き込めない場合は、npmコマンドに
-`NPM_CONFIG_CACHE=/workspace/.cloud-setup/npm-cache` を指定してください。
+`dist/` は相対パス（`base: './'`）でビルドされるため、任意の静的ホスティングにそのまま置けます。
+`?seed=123` を付けると出現順を固定できます（検証用）。
 
-## 操作・ルール
+## ディレクトリ構成
 
-| 操作 | キー |
-| --- | --- |
-| 左右移動 | ← / → |
-| 右回転 / 左回転 | ↑ または X / Z |
-| 高速落下 | ↓ |
-| ハードドロップ | Space |
-| 一時停止・再開 | P / Esc |
-
-スマホはフィールド下のボタンで操作します。左右移動・高速落下は長押しに対応しています。
-タブを非表示にしたりフォーカスを失った場合は自動で一時停止します。
-
-- 各セルを90%以上埋め、横10セルを揃えると「資産整理」です。回転後の多角形の**和集合**で占有率を計算します。
-- **MVPでは対象行に交差するデバイス全体を整理します。** 機器を分割しません。隣接行に載るだけの機器を巻き込まないよう、行の上下境界に1論理pxの接触許容幅を設けています。
-- 接地して0.8秒安定すると配置確定します。確定後も物理ボディは残ります。整理判定は山が安定してから実施し、残った機器をワープさせません。
-- 確定済み機器が上の危険ラインを2秒間超えるか、次の出現位置が塞がるとゲームオーバーです。
-- 6台目に「新製品発表」（次の3台がmini M4）、12台目に「整備済製品入荷」（次の1台が20%引き）。以後12台ごとに繰り返します。
-- 整理行5行ごとにレベルと重力が上がります。散財総額 = 整理額 + 積みMac指数となり、割引も会計に反映します。
-- ハイスコアは**1プレイの資産整理額**です。ゲームオーバー時にlocalStorageへ記録します。音声設定も保存します。保存不可でもプレイは継続できます。
-- 効果音・簡易シーケンスBGMは個別に切り替えできます。結果共有はWeb Share API、非対応時はコピー、コピー不可時は結果テキストを手動選択できます。
-
-## 検証
-
-```bash
-npm test
-npm run build
-npm run test:e2e
+```
+src/
+  app/          App（画面遷移）, share（共有テキスト・Web Share/クリップボード）
+  components/   Title / HowTo / Game / Pause / GameOver / Hud / TouchControls / SoundToggles
+  data/         devices.ts（5種類の架空パラメータ）
+  game/
+    config.ts   盤面・物理・タイミング定数
+    engine/     GameSim（DOM非依存のゲーム本体）, GameEngine（rAF・描画・入力・音）, loop（固定ステップ）
+    physics/    world（Matter.js ワールド・ボディ生成）, geometry（SAT・クリップ・面積）
+    grid/       occupancy（セル占有率・和集合）, rowClear（行消去・ボディ分割プラン）
+    entities/   DeviceEntity
+    systems/    scoring, danger, lock, spawner(イベント), input, audio, highscore, rng
+    rendering/  renderer（Canvas）, sprites（オリジナルのデバイス絵・キャッシュ）
+  hooks/        useStageSize（リサイズ・回転追従）
+  styles/       app.css（レスポンシブ）
+  tests/        Vitest
+e2e/            Playwright
 ```
 
-## HTMLプレビュー・GitHub Pages
+## 主な仕様の実装方法
 
-ソースの `index.html` はVite用の入口です。HTMLファイル単体の可視化パネルではTypeScriptや依存パッケージを解決できないため、そのまま開かないでください。
-`npm run build` は、JavaScript・CSS・アイコンをすべて内包した **`dist/preview.html`** も生成します。単体ファイルのプレビューやダウンロードにはこちらを使用します。外部ファイルの読み込みは不要です。
+| 項目 | 実装 |
+|---|---|
+| 座標系 | 論理 360×648（10×18セル、1セル36px）。表示は変換行列でスケーリング |
+| 落下中の制御 | 操作対象のみ速度・角度を毎ステップ指定（列スナップ移動、90°回転、壁キック）。接地を検出したら制御を解除し完全に物理へ委ねる |
+| 配置確定 | 接地後、速度・角速度・移動量が閾値以下の状態が0.8秒継続で確定（転がり続ける場合は5秒で強制確定）。確定後もボディは残り、衝撃で再び動く |
+| 重量・摩擦 | `Body.setMass` に質量、軽量機ほど低摩擦。重い機体は衝突時に下の積みMacを押し動かす |
+| 占有判定 | 回転後の多角形をセルでクリップ → 同一セル内は包除原理で**和集合面積**（6個超はサンプリング）→ 90%以上で占有 |
+| 行消し | 行に交差するボディを行単位で**分割・再構築**し、消去部分のみ除去。残りは再び重力で落下。11.5°以上傾いたボディのみ簡易方式（消去帯に半分以上かかる場合に全体整理） |
+| スコア | 台帳で一元管理。`散財総額 = 積みMac指数 + 整理額` を常に維持、部分消去は面積比で按分、同一IDの二重計上を防止 |
+| ゲームオーバー | 確定済みボディの上端が危険ラインより上の状態が2秒連続／出現位置が塞がっている |
+| 負荷対策 | 60Hz固定ステップ（1フレーム最大4ステップ）、背景・スプライトの事前描画キャッシュ、内部解像度上限、Matter.jsスリープ、HUDは120ms間隔かつ差分時のみReact更新、一時停止・非表示時はrAF停止 |
 
-`main` へのpushで `.github/workflows/pages.yml` が検証・ビルドし、GitHub Pagesへ公開します。公開先はGitHub ActionsのDeploy出力とリポジトリのDeploymentsで確認してください。
-初回はリポジトリの **Settings → Pages → Source: GitHub Actions** を選択し、ワークフローを実行してください。GitHub Actionsの標準トークンではPagesの初期有効化が拒否されるため、管理者による設定が必要です。
-Pagesの設定前でもビルドジョブは実行できます。ワークフローのArtifactsにある `tsumi-mac-standalone-preview` から単体HTMLを取得できます。
-ビルドのアセットURLは相対パスなので `/tsumi-mac/` 配下でも動作します。
+## 検証用デバッグAPI
 
-`npm run test:e2e` は本番ビルド後に実行し、通常のPC・スマホ操作に加えて、単体HTMLファイルとsandbox付きiframeでゲームを開始・操作できることを検証します。
-
-Playwrightはクラウド上の `/usr/bin/chromium` があれば使用します。任意のChromiumは
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` で指定できます。それ以外は事前に
-`npx playwright install chromium`（LinuxでOS依存パッケージも必要なら `npx playwright install --with-deps chromium`）を実行してください。
-
-単体テストは占有率境界・回転多角形・和集合・単行/複数行整理・隣接機器の保護・質量・衝突・操作・会計・イベント・危険判定・音声・保存を検証します。
-E2EはPCとスマホ相当のChromiumで開始、移動、回転、タッチ、停止・再開、リサイズ、行整理、ゲームオーバー、再挑戦、記録保存、共有を検証します。
-行整理などの再現用フィクスチャは `--mode e2e` のみで読み込み、本番ビルドには含めません。
-
-## 構成と制約
-
-`src/game/engine` が進行、`physics` がMatter.js、`grid` が占有判定、`systems` が会計・音声・保存、`rendering` がCanvasを担当し、ReactのUIから分離しています。
-60Hz固定ステップ、遅延時最大5ステップ、sleeping、安定時のみの占有計算、100msごとのUI更新、外部画像・フォント不使用で負荷を抑えています。
-N100実機の60fps、およびSafari・Firefox・スマホ実機での検証は未実施です。物理分割による部分消去は将来対応です。
+ブラウザのコンソールから `window.__tsumimac` が使えます（e2eテストでも使用）。
+`state()`, `forceNext('pro')`, `placeLocked(kind, col, row, quadrant)`, `triggerEvent('launch'|'refurb')`, `setTimeScale(n)`, `occupancy()`
 
 ## 注意
-登場する機器の寸法・質量・価格は**ゲーム用の架空パラメータ**です。ビジュアルは独自制作し、Appleのロゴ・公式画像を使わない非公式のファンゲームとして扱います。
 
-> これだけMacを買って、結局N100で開発しました。
+本作は非公式のパロディゲームです。デバイスのサイズ・質量・価格はゲーム用の架空パラメータで、実製品とは無関係です。
+デバイスの絵はCanvasで描いたオリジナルで、Apple公式の画像・ロゴ・製品写真は使用していません。
