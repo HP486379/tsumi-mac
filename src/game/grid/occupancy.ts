@@ -1,156 +1,117 @@
-export type Point = { x: number; y: number };
-type Polygon = readonly Point[];
-const EPS = 1e-8;
-/** Sutherland–Hodgman clipping against an axis-aligned cell. */
-export function clipCell(
-  poly: Polygon,
-  x: number,
-  y: number,
-  size: number,
-  height = size,
-): Point[] {
-  let out = [...poly];
-  for (const [axis, edge, sign] of [
-    ["x", x, 1],
-    ["x", x + size, -1],
-    ["y", y, 1],
-    ["y", y + height, -1],
-  ] as const) {
-    const input = out;
-    out = [];
-    for (let i = 0; i < input.length; i++) {
-      const a = input[i],
-        b = input[(i + 1) % input.length];
-      const insideA = (a[axis] - edge) * sign >= -EPS,
-        insideB = (b[axis] - edge) * sign >= -EPS;
-      if (insideA) out.push(a);
-      if (insideA !== insideB) {
-        const t = (edge - a[axis]) / (b[axis] - a[axis]);
-        out.push({ x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) });
+/**
+ * 仮想グリッド占有判定。
+ * 各物理ボディの「回転後の多角形」とセルの重なり面積を計算し、
+ * 同一セル内に複数ボディがある場合は面積の和集合（包除原理）で占有率を求める（≤100%）。
+ */
+import { COLS, ROWS, CELL, OCCUPANCY_THRESHOLD } from '../config';
+import {
+  type Polygon, type AABB, clipPolygonToRect, intersectConvex, polygonArea, polygonAABB,
+} from '../physics/geometry';
+
+export interface GridSpec { cols: number; rows: number; cell: number }
+export const DEFAULT_GRID: GridSpec = { cols: COLS, rows: ROWS, cell: CELL };
+
+/** 包除原理で扱う最大多角形数。超えた場合はサンプリングにフォールバック */
+const MAX_EXACT_UNION = 6;
+
+/** 凸多角形群の和集合面積（各多角形はすでにセル内にクリップ済み） */
+export function unionArea(polys: Polygon[], cellRect: AABB): number {
+  const list = polys.filter((p) => p.length >= 3 && polygonArea(p) > 1e-9);
+  const n = list.length;
+  if (n === 0) return 0;
+  if (n === 1) return polygonArea(list[0]!);
+  if (n <= MAX_EXACT_UNION) {
+    let total = 0;
+    // 包除原理：|A∪B∪…| = Σ|A| − Σ|A∩B| + …（凸同士の交差は凸）
+    const recurse = (start: number, current: Polygon, depth: number) => {
+      for (let i = start; i < n; i++) {
+        const inter = depth === 0 ? list[i]! : intersectConvex(current, list[i]!);
+        const a = polygonArea(inter);
+        if (a <= 1e-9) continue;
+        total += (depth % 2 === 0 ? 1 : -1) * a;
+        recurse(i + 1, inter, depth + 1);
+      }
+    };
+    recurse(0, [], 0);
+    const cellArea = (cellRect.maxX - cellRect.minX) * (cellRect.maxY - cellRect.minY);
+    return Math.max(0, Math.min(cellArea, total));
+  }
+  return sampledUnionArea(list, cellRect, 16);
+}
+
+function pointInConvex(p: Polygon, x: number, y: number): boolean {
+  let sign = 0;
+  for (let i = 0; i < p.length; i++) {
+    const a = p[i]!;
+    const b = p[(i + 1) % p.length]!;
+    const c = (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
+    if (Math.abs(c) < 1e-12) continue;
+    const s = c > 0 ? 1 : -1;
+    if (sign === 0) sign = s;
+    else if (s !== sign) return false;
+  }
+  return true;
+}
+
+function sampledUnionArea(polys: Polygon[], r: AABB, res: number): number {
+  const w = r.maxX - r.minX;
+  const h = r.maxY - r.minY;
+  let hit = 0;
+  for (let j = 0; j < res; j++) {
+    for (let i = 0; i < res; i++) {
+      const x = r.minX + ((i + 0.5) / res) * w;
+      const y = r.minY + ((j + 0.5) / res) * h;
+      if (polys.some((p) => pointInConvex(p, x, y))) hit++;
+    }
+  }
+  return (hit / (res * res)) * w * h;
+}
+
+/** 全セルの占有率（0..1）を row-major で返す */
+export function computeOccupancy(polygons: Polygon[], grid: GridSpec = DEFAULT_GRID): Float32Array {
+  const { cols, rows, cell } = grid;
+  const perCell: Polygon[][] = Array.from({ length: cols * rows }, () => []);
+  for (const poly of polygons) {
+    const bb = polygonAABB(poly);
+    const c0 = Math.max(0, Math.floor(bb.minX / cell));
+    const c1 = Math.min(cols - 1, Math.floor((bb.maxX - 1e-9) / cell));
+    const r0 = Math.max(0, Math.floor(bb.minY / cell));
+    const r1 = Math.min(rows - 1, Math.floor((bb.maxY - 1e-9) / cell));
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const rect = { minX: c * cell, minY: r * cell, maxX: (c + 1) * cell, maxY: (r + 1) * cell };
+        const clipped = clipPolygonToRect(poly, rect);
+        if (clipped.length >= 3) perCell[r * cols + c]!.push(clipped);
       }
     }
+  }
+  const occ = new Float32Array(cols * rows);
+  const cellArea = cell * cell;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const list = perCell[r * cols + c]!;
+      if (list.length === 0) continue;
+      const rect = { minX: c * cell, minY: r * cell, maxX: (c + 1) * cell, maxY: (r + 1) * cell };
+      occ[r * cols + c] = Math.min(1, unionArea(list, rect) / cellArea);
+    }
+  }
+  return occ;
+}
+
+export function isCellOccupied(ratio: number, threshold = OCCUPANCY_THRESHOLD): boolean {
+  // 浮動小数誤差で 0.9 ちょうどが落ちないよう微小値を許容
+  return ratio >= threshold - 1e-6;
+}
+
+/** 10セルすべて占有された行のインデックス（上から0）を返す */
+export function findFullRows(occ: Float32Array, grid: GridSpec = DEFAULT_GRID, threshold = OCCUPANCY_THRESHOLD): number[] {
+  const out: number[] = [];
+  for (let r = 0; r < grid.rows; r++) {
+    let full = true;
+    for (let c = 0; c < grid.cols; c++) {
+      if (!isCellOccupied(occ[r * grid.cols + c]!, threshold)) { full = false; break; }
+    }
+    if (full) out.push(r);
   }
   return out;
-}
-/** Exact vertical-slab integration of the union of convex polygons.
- * Edge intersections split slabs so their union length is linear inside each slab.
- * Unlike summed areas this cannot count overlapping bodies twice.
- */
-export function unionArea(polys: Polygon[]): number {
-  const polygons = polys.filter((p) => p.length >= 3);
-  const edges = polygons.flatMap((p) =>
-    p.map((a, i) => [a, p[(i + 1) % p.length]] as const),
-  );
-  const xs = polygons.flatMap((p) => p.map((v) => v.x));
-  for (let i = 0; i < edges.length; i++)
-    for (let j = i + 1; j < edges.length; j++) {
-      const [a, b] = edges[i],
-        [c, d] = edges[j];
-      const rx = b.x - a.x,
-        ry = b.y - a.y,
-        sx = d.x - c.x,
-        sy = d.y - c.y;
-      const det = rx * sy - ry * sx;
-      if (Math.abs(det) < EPS) continue;
-      const t = ((c.x - a.x) * sy - (c.y - a.y) * sx) / det;
-      const u = ((c.x - a.x) * ry - (c.y - a.y) * rx) / det;
-      if (t > 0 && t < 1 && u > 0 && u < 1) xs.push(a.x + t * rx);
-    }
-  xs.sort((a, b) => a - b);
-  let area = 0;
-  for (let i = 1; i < xs.length; i++) {
-    const width = xs[i] - xs[i - 1];
-    if (width < EPS) continue;
-    const x = (xs[i] + xs[i - 1]) / 2;
-    const intervals: [number, number][] = [];
-    for (const p of polygons) {
-      const ys: number[] = [];
-      for (let j = 0; j < p.length; j++) {
-        const a = p[j],
-          b = p[(j + 1) % p.length];
-        if ((a.x <= x && b.x > x) || (b.x <= x && a.x > x))
-          ys.push(a.y + ((x - a.x) * (b.y - a.y)) / (b.x - a.x));
-      }
-      if (ys.length >= 2) intervals.push([Math.min(...ys), Math.max(...ys)]);
-    }
-    intervals.sort((a, b) => a[0] - b[0]);
-    let length = 0,
-      end = -Infinity;
-    for (const [a, b] of intervals) {
-      length += Math.max(0, b - Math.max(a, end));
-      end = Math.max(end, b);
-    }
-    area += width * length;
-  }
-  return area;
-}
-export function coverage(
-  polys: Polygon[],
-  x: number,
-  y: number,
-  size = 36,
-): number {
-  return Math.min(
-    1,
-    Math.max(
-      0,
-      unionArea(polys.map((p) => clipCell(p, x, y, size))) / (size * size),
-    ),
-  );
-}
-export function fullRows(
-  polys: Polygon[],
-  cell = 36,
-  columns = 10,
-  rows = 18,
-): number[] {
-  const result: number[] = [];
-  const bounds = polys.map((p) => ({
-    p,
-    minX: Math.min(...p.map((v) => v.x)),
-    maxX: Math.max(...p.map((v) => v.x)),
-    minY: Math.min(...p.map((v) => v.y)),
-    maxY: Math.max(...p.map((v) => v.y)),
-  }));
-  for (let row = rows - 1; row >= 0; row--) {
-    const y = row * cell;
-    const candidates = bounds.filter((b) => b.maxY > y && b.minY < y + cell);
-    if (!candidates.length) continue;
-    let full = true;
-    for (let col = 0; col < columns; col++) {
-      const x = col * cell;
-      if (
-        coverage(
-          candidates
-            .filter((b) => b.maxX > x && b.minX < x + cell)
-            .map((b) => b.p),
-          x,
-          y,
-          cell,
-        ) <
-        0.9 - 1e-9
-      ) {
-        full = false;
-        break;
-      }
-    }
-    if (full) result.push(row);
-  }
-  return result;
-}
-export function intersectsRow(poly: Polygon, row: number, cell = 36) {
-  // Matter's contact solver permits slight penetration. Do not treat a device
-  // merely resting on the next row as crossing the row being cleared.
-  const contactTolerance = 1;
-  return (
-    unionArea([
-      clipCell(
-        poly,
-        0,
-        row * cell + contactTolerance,
-        cell * 10,
-        cell - 2 * contactTolerance,
-      ),
-    ]) > 1e-5
-  );
 }

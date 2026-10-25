@@ -1,29 +1,33 @@
 {
-  "name": "tsumi-mac",
-  "version": "1.0.0",
+  "name": "tsumimac",
   "private": true,
+  "version": "1.0.0",
+  "description": "積みMac — STACK YOUR MAC : 買って満足。積んで絶望。",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build && node scripts/create-preview.mjs",
-    "preview": "vite preview --host 0.0.0.0",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
-    "matter-js": "0.20.0",
-    "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "matter-js": "^0.20.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1",
-    "@types/matter-js": "0.20.2",
-    "@types/node": "26.6.5",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "typescript": "7.0.2",
-    "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "@playwright/test": "^1.55.0",
+    "@types/matter-js": "^0.19.8",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.0",
+    "vitest": "^5.0.5"
   }
 }

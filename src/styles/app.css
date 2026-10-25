@@ -1,0 +1,205 @@
+:root {
+  --bg: #0d0f14;
+  --panel: #171a22;
+  --panel2: #1f2330;
+  --text: #eef1f6;
+  --muted: #9aa3b2;
+  --accent: #7fd3ff;
+  --money: #ffd36e;
+  --danger: #ff4a5e;
+  --ok: #8affc1;
+  --radius: 14px;
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(--text); }
+body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; }
+
+.app { height: 100%; min-height: 100dvh; }
+
+/* ---------- 共通 ---------- */
+.screen {
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.btn {
+  border: 1px solid #3a4152; background: var(--panel2); border-radius: 12px;
+  padding: 12px 20px; min-height: 48px; cursor: pointer; font-weight: 700;
+  transition: transform .08s, background .15s;
+}
+.btn:hover { background: #2a3040; }
+.btn:active { transform: scale(.97); }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: linear-gradient(180deg, #4fb6ff, #2c7fd6); border-color: #6cc4ff; color: #fff; }
+.btn.big { font-size: 1.15rem; padding: 14px 28px; min-width: 220px; }
+.btn.ghost { background: transparent; }
+.menu { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+.sound-toggles { display: flex; gap: 12px; justify-content: center; }
+.toggle { border: 1px solid #3a4152; border-radius: 999px; padding: 8px 14px; min-height: 40px; background: var(--panel); cursor: pointer; font-weight: 700; }
+.toggle.on { border-color: var(--ok); color: var(--ok); }
+.toggle.off { color: var(--muted); }
+
+/* ---------- タイトル ---------- */
+.title-stack { position: relative; width: 150px; height: 120px; margin-bottom: 4px; }
+.ts-box { position: absolute; border-radius: 6px; background: linear-gradient(#e2e6eb, #9aa1ab); border: 1.5px solid #222; }
+.ts-pro { width: 44px; height: 88px; left: 8px; bottom: 0; background: radial-gradient(circle, #555 1.5px, transparent 2px) 0 0 / 7px 7px, linear-gradient(#c3c8cf, #7c838e); }
+.ts-studio { width: 72px; height: 44px; left: 54px; bottom: 0; }
+.ts-mini { width: 60px; height: 22px; left: 60px; bottom: 46px; transform: rotate(-8deg); }
+.ts-m4 { width: 24px; height: 24px; left: 84px; bottom: 70px; transform: rotate(14deg); }
+.logo { margin: 0; display: flex; flex-direction: column; line-height: 1.05; }
+.logo-ja { font-size: clamp(2.6rem, 11vw, 4.2rem); font-weight: 900; letter-spacing: .04em; }
+.logo-en { font-size: clamp(.9rem, 3.6vw, 1.2rem); letter-spacing: .35em; color: var(--accent); font-weight: 800; }
+.catch { margin: 0 0 8px; font-size: 1.1rem; color: var(--money); font-weight: 800; }
+.hiscore { display: flex; gap: 18px; margin: 4px 0 0; flex-wrap: wrap; justify-content: center; }
+.hiscore div { background: var(--panel); border-radius: 10px; padding: 8px 12px; }
+.hiscore dt { font-size: .75rem; color: var(--muted); }
+.hiscore dd { margin: 0; font-weight: 800; }
+.disclaimer { max-width: 520px; font-size: .7rem; color: var(--muted); line-height: 1.5; }
+
+/* ---------- 遊び方 ---------- */
+.howto-screen { justify-content: flex-start; text-align: left; max-width: 640px; margin: 0 auto; }
+.howto-screen section { background: var(--panel); border-radius: var(--radius); padding: 12px 16px; width: 100%; }
+.howto-screen h3 { margin: 4px 0 8px; color: var(--accent); }
+.howto-screen ul { margin: 0; padding-left: 1.2em; line-height: 1.6; }
+.howto-screen table { border-collapse: collapse; width: 100%; }
+.howto-screen th, .howto-screen td { padding: 6px 8px; border-bottom: 1px solid #2a3040; text-align: left; }
+.note { color: var(--muted); font-size: .85rem; }
+
+/* ---------- ゲーム画面 ---------- */
+.game-screen {
+  height: 100dvh; width: 100%;
+  display: grid; gap: 8px;
+  padding: max(6px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "hud hud" "stage stage" "cl cr";
+  touch-action: none; user-select: none; -webkit-user-select: none; overflow: hidden;
+}
+.stage { grid-area: stage; display: flex; align-items: center; justify-content: center; min-height: 0; min-width: 0; position: relative; }
+.canvas-wrap { position: relative; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 2px #2a3040, 0 10px 30px rgba(0,0,0,.5); }
+.game-canvas { display: block; touch-action: none; }
+
+.hud {
+  grid-area: hud; display: grid; gap: 6px; align-items: stretch;
+  grid-template-columns: 1fr 1fr 84px 48px;
+  grid-template-areas: "spent index next pause" "lv lines next pause";
+}
+.hud-item.spent { grid-area: spent; }
+.hud-item.index { grid-area: index; }
+.hud-item.lv { grid-area: lv; flex-direction: row; align-items: baseline; gap: 8px; }
+.hud-item.lines { grid-area: lines; flex-direction: row; align-items: baseline; gap: 8px; }
+.hud-item.next { grid-area: next; }
+.pause-btn { grid-area: pause; }
+.hud-item { background: var(--panel); border-radius: 10px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.hud-label { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-value { font-weight: 900; font-variant-numeric: tabular-nums; font-size: clamp(.8rem, 3.4vw, 1.05rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-item.spent .hud-value { color: var(--money); }
+.hud-item.index .hud-value { color: var(--accent); }
+.hud-item.next { align-items: center; padding: 2px 4px; }
+.next-canvas { width: 56px; height: 36px; }
+.next-name { font-size: .6rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.pause-btn { min-height: 44px; min-width: 44px; padding: 0 10px; }
+.hud-item.lv .hud-value, .hud-item.lines .hud-value { font-size: .9rem; }
+
+.side-panel { display: none; }
+
+.touch-group { display: flex; gap: 14px; align-items: center; }
+.touch-group.cl { grid-area: cl; justify-content: flex-start; }
+.touch-group.cr { grid-area: cr; justify-content: flex-end; }
+.touch-btn {
+  width: 66px; height: 66px; border-radius: 50%; border: 2px solid #3a4152;
+  background: radial-gradient(circle at 35% 30%, #343b4d, #1b1f2a);
+  font-size: 1.6rem; font-weight: 900; touch-action: none; cursor: pointer;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.touch-btn:active { background: #3d4a66; border-color: var(--accent); }
+.touch-btn.small { width: 48px; height: 48px; font-size: 1rem; }
+
+@media (max-width: 480px) {
+  .hud { gap: 4px; grid-template-columns: 1fr 1fr 72px 44px; }
+  .hud-item { padding: 3px 7px; }
+  .hud-label { font-size: .6rem; }
+}
+
+/* マウス主体の環境ではタッチボタンを隠し、サイドパネルを表示 */
+@media (hover: hover) and (pointer: fine) {
+  .touch-group { display: none; }
+  .game-screen { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "stage stage"; }
+}
+
+/* 横長（PC・スマホ横向き）：左右に情報と操作を配置 */
+@media (min-aspect-ratio: 1/1) {
+  .game-screen {
+    grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "hud stage side" "cl stage cr";
+  }
+  .hud { grid-template-columns: 1fr; grid-template-areas: none; align-content: start; max-width: 260px; justify-self: end; width: 100%; }
+  .hud > * { grid-area: auto !important; }
+  .hud-item.lv, .hud-item.lines { flex-direction: column; align-items: stretch; gap: 0; }
+  .hud-item.lv .hud-value, .hud-item.lines .hud-value { font-size: 1.1rem; }
+  .hud-item { padding: 8px 12px; }
+  .hud-value { font-size: 1.1rem; }
+  .next-canvas { width: 100px; height: 72px; }
+  .stage { height: 100%; }
+  .side-panel { grid-area: side; display: block; max-width: 260px; color: var(--muted); font-size: .85rem; }
+  .side-panel h3 { color: var(--text); margin: 4px 0 8px; }
+  .key-help { list-style: none; padding: 0; margin: 0; line-height: 2; }
+  kbd { background: var(--panel2); border: 1px solid #3a4152; border-radius: 5px; padding: 1px 6px; font-size: .8rem; color: var(--text); }
+  .touch-group { flex-wrap: wrap; align-content: flex-end; }
+  .touch-group.cl { justify-content: flex-end; }
+  .touch-group.cr { justify-content: flex-start; }
+}
+@media (min-aspect-ratio: 1/1) and (hover: hover) and (pointer: fine) {
+  .game-screen { grid-template-rows: minmax(0, 1fr); grid-template-areas: "hud stage side"; }
+}
+/* 低い横画面（スマホ横向き）ではキーヘルプを隠す */
+@media (min-aspect-ratio: 1/1) and (max-height: 520px) {
+  .side-panel { display: none; }
+  .hud-item { padding: 3px 8px; }
+  .hud-value { font-size: .9rem; }
+  .next-canvas { width: 60px; height: 40px; }
+  .game-screen { grid-template-areas: "hud stage cr" "cl stage cr"; }
+}
+
+/* トースト・オーバーレイ */
+.toasts { position: absolute; top: 84px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.toast { background: rgba(20,24,34,.92); border: 1px solid #3a4152; border-radius: 10px; padding: 6px 12px; display: flex; flex-direction: column; align-items: center; font-size: .8rem; animation: toastIn .25s ease-out; }
+.toast strong { font-size: .95rem; }
+.toast.event strong { color: var(--ok); }
+.toast.spend strong { color: var(--money); }
+.toast.level strong { color: var(--accent); }
+@keyframes toastIn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.collapse-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(40,0,8,.55); animation: fadeIn .3s; }
+.collapse-overlay span { font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 900; color: #fff; text-shadow: 0 0 12px var(--danger), 0 3px 0 #000; transform: rotate(-6deg); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.overlay { position: fixed; inset: 0; background: rgba(5,7,12,.72); display: flex; align-items: center; justify-content: center; z-index: 10; touch-action: auto; }
+.panel { background: var(--panel); border: 1px solid #2f3646; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; align-items: center; min-width: 280px; }
+.panel h2 { margin: 0; }
+.panel .sub { margin: 0; color: var(--muted); font-size: .85rem; }
+.panel .row { display: flex; gap: 12px; }
+
+/* ---------- 結果 ---------- */
+.collapse-title { font-size: clamp(2rem, 10vw, 3rem); margin: 0; color: #fff; text-shadow: 0 0 14px var(--danger); }
+.new-record { color: var(--money); font-weight: 900; margin: 0; }
+.result-table { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; width: min(460px, 100%); }
+.result-table div { background: var(--panel); border-radius: 10px; padding: 8px 12px; text-align: left; }
+.result-table dt { font-size: .72rem; color: var(--muted); }
+.result-table dd { margin: 0; font-weight: 900; font-variant-numeric: tabular-nums; }
+.result-table .hl { grid-column: span 2; }
+.result-table .hl dd { color: var(--money); font-size: 1.5rem; }
+.boot-line { margin: 0; font-weight: 900; color: var(--danger); font-size: 1.1rem; }
+.best { margin: 0; color: var(--muted); }
+.share-msg { min-height: 1.2em; color: var(--ok); margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast, .collapse-overlay { animation: none; }
+}
