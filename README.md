@@ -19,6 +19,19 @@ npm run test:e2e     # Playwright（desktop-chromium / mobile-chromium[Pixel 7]�
 `dist/` は相対パス（`base: './'`）でビルドされるため、任意の静的ホスティングにそのまま置けます。
 `?seed=123` を付けると出現順を固定できます（検証用）。
 
+## 正面＋斜めビュー（dual-view）
+
+- 正面ビューが従来どおりの操作・判定用メイン画面です。PCでは右側に閲覧専用の斜めビューを表示します。
+- スマートフォンでは「斜めビュー」の見出しから開閉できます。初期状態は折りたたみで、開くと正面の下に表示します。横向きの低い画面では右側にコンパクト表示します。
+- `GameEngine` の既存ループで得た**同じフレームの同じ `RenderState`**を、`frameViews.ts` が正面→斜めの順で渡します。物理ワールド・シミュレーション・入力・ゲームループは追加していません。
+- `obliqueRenderer.ts` がCanvas 2Dの疑似3Dを担当します。正面のスプライトキャッシュを共有し、機種・回転・整備済タグ・行消去後の断片を反映します。追加ライブラリはありません。
+- 斜めビューの全デバイス前面・床・グリッドは共通の投影面を使います。側面は装飾であり、接触位置や隙間の判断は正面で行ってください。完全な3Dの遮蔽・影・カメラ操作は扱いません。
+- 閉じている間は追加描画を切り離します。背景はキャッシュし、追加キャンバスの解像度にも上限を設けています。ポーズ中の開閉・リサイズでは保存済みフレームを再描画し、物理時間は進めません。
+- `npm test` は既存61件＋追加13件。`npm run test:e2e` はPC・Pixel 7相当で既存操作と同期表示を確認します。システムChromiumを使う場合は `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e` を実行できます。
+- 開発環境のChromiumでは開閉どちらも約60fpsを確認しました。N100・スマートフォン実機・Safariでの速度は未検証です。
+
+この変更は `dual-view` ブランチ用です。`main` へのマージおよびGitHub Pagesへの公開は行いません。
+
 ## ディレクトリ構成
 
 ```
@@ -57,7 +70,9 @@ e2e/            Playwright
 ## 検証用デバッグAPI
 
 ブラウザのコンソールから `window.__tsumimac` が使えます（e2eテストでも使用）。
-`state()`, `forceNext('pro')`, `placeLocked(kind, col, row, quadrant)`, `triggerEvent('launch'|'refurb')`, `setTimeScale(n)`, `occupancy()`
+`state()`, `forceNext('pro')`, `placeLocked(kind, col, row, quadrant)`, `triggerEvent('launch'|'refurb')`, `setTimeScale(n)`, `occupancy()`, `views()`
+
+`views()` は両ビューの最終描画状態・斜めビューの描画回数・同一フレーム参照の一致を返します（同期検証用）。
 
 ## 注意
 

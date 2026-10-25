@@ -203,3 +203,33 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .toast, .collapse-overlay { animation: none; }
 }
+
+/* Auxiliary rendering only. The existing front stage keeps its grid column. */
+.side-panel { min-width: 0; }
+.oblique-panel { background: var(--panel); border: 1px solid #30394c; border-radius: 10px; overflow: hidden; }
+.oblique-panel summary { padding: 9px 10px; min-height: 38px; cursor: pointer; font-size: .8rem; font-weight: 700; color: var(--text); touch-action: manipulation; }
+.oblique-panel summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.oblique-panel summary span { font-size: .6rem; color: var(--accent); margin-left: 6px; }
+.oblique-surface { position: relative; aspect-ratio: 400 / 704; width: min(100%, 290px, calc((100dvh - 270px) * 400 / 704)); margin: auto; }
+.oblique-canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+.oblique-note { margin: 4px 8px 8px; color: var(--muted); font-size: .65rem; line-height: 1.5; }
+.oblique-status { position: absolute; inset: 0; display: grid; place-items: center; background: #28000888; color: #fff; font-weight: 900; pointer-events: none; }
+.operation-guide { margin-top: 14px; }
+@media (max-aspect-ratio: 1/1) {
+  .game-screen { grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "hud hud" "stage stage" "oblique oblique" "cl cr"; }
+  .side-panel { display: block; grid-area: oblique; width: 100%; }
+  .operation-guide { display: none; }
+  .oblique-surface { height: min(24dvh, 210px); max-height: none; width: auto; }
+  .oblique-note { text-align: center; font-size: .6rem; }
+}
+@media (min-aspect-ratio: 1/1) {
+  .side-panel { max-width: 300px; }
+}
+@media (min-aspect-ratio: 1/1) and (max-height: 520px) {
+  .side-panel { display: block; position: absolute; top: max(6px, env(safe-area-inset-top)); right: 8px; width: min(190px, 24vw); z-index: 2; }
+  .operation-guide { display: none; }
+  .oblique-panel summary { font-size: .65rem; padding: 6px; }
+  .oblique-panel summary span { display: none; }
+  .oblique-surface { height: min(42dvh, 170px); max-height: none; width: auto; }
+  .oblique-note { font-size: .55rem; }
+}
