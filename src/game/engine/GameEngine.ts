@@ -7,7 +7,9 @@ import { HUD_INTERVAL_MS } from '../config';
 import type { DeviceKind } from '../../data/devices';
 import { GameSim, type GameMessage, type GameOverReason } from './GameSim';
 import { FixedStepper } from './loop';
-import { Renderer } from '../rendering/renderer';
+import { Renderer, type RenderState } from '../rendering/renderer';
+import { FrameViews } from '../rendering/frameViews';
+import { ObliqueRenderer } from '../rendering/obliqueRenderer';
 import { AudioManager } from '../systems/audio';
 import { actionForKey, type Action } from '../systems/input';
 import type { ScoreSnapshot } from '../systems/scoring';
@@ -28,6 +30,7 @@ export interface EngineCallbacks {
 }
 
 export interface EngineDebugApi {
+  views: () => { front: RenderState | null; oblique: RenderState | null; obliqueFrames: number; synchronized: boolean };
   state: () => {
     status: string; paused: boolean; entities: number; active: string | null; activeState: string | null;
     q: number; score: ScoreSnapshot; danger: number; fps: number; steps: number; escaped: number;
@@ -43,6 +46,8 @@ export interface EngineDebugApi {
 export class GameEngine {
   sim: GameSim;
   private renderer: Renderer;
+  private views: FrameViews;
+  private oblique: ObliqueRenderer | null = null;
   private stepper = new FixedStepper();
   private raf = 0;
   private lastT = 0;
@@ -62,6 +67,7 @@ export class GameEngine {
     private readonly seed?: number,
   ) {
     this.renderer = new Renderer(canvas);
+    this.views = new FrameViews(this.renderer);
     this.sim = this.createSim();
     this.onVisibility = this.onVisibility.bind(this);
     this.frame = this.frame.bind(this);
@@ -117,7 +123,7 @@ export class GameEngine {
       const steps = this.stepper.advance(dt) * this.timeScale;
       for (let i = 0; i < steps && this.sim.status === 'running'; i++) this.sim.step();
     }
-    this.renderer.draw(this.sim.renderState());
+    this.views.draw(this.sim.renderState());
     if (t - this.lastHud >= HUD_INTERVAL_MS) {
       this.lastHud = t;
       this.emitHud(false);
@@ -148,7 +154,7 @@ export class GameEngine {
     this.sim.input.clear();
     cancelAnimationFrame(this.raf);
     this.audio.suspend();
-    this.renderer.draw(this.sim.renderState());
+    this.views.draw(this.sim.renderState());
     this.emitHud(true);
     this.cb.onPauseChange(true);
   }
@@ -203,12 +209,26 @@ export class GameEngine {
 
   resize(cssW: number, cssH: number, dpr: number): void {
     this.renderer.resize(cssW, cssH, dpr);
-    this.renderer.draw(this.sim.renderState());
+    this.views.draw(this.sim.renderState());
+  }
+
+  /** Optional rendering sink only; never starts a loop or another GameSim. */
+  setObliqueView(canvas: HTMLCanvasElement | null, width = 400, height = 704, dpr = 1): void {
+    this.oblique = canvas ? new ObliqueRenderer(canvas, this.renderer.sprites) : null;
+    this.oblique?.resize(width, height, dpr);
+    this.views.attach(this.oblique);
+  }
+
+  resizeOblique(width: number, height: number, dpr: number): void {
+    this.oblique?.resize(width, height, dpr);
+    if (this.oblique && this.views.lastState) this.oblique.draw(this.views.lastState);
   }
 
   // ------------------------------------------------------------------ デバッグ・検証用
   debugApi(): EngineDebugApi {
     return {
+      views: () => ({ front: this.views.lastState, oblique: this.oblique?.lastState ?? null,
+        obliqueFrames: this.oblique?.frames ?? 0, synchronized: !!this.oblique && this.oblique.lastState === this.views.lastState }),
       state: () => {
         const a = this.sim.active;
         return {
@@ -244,6 +264,8 @@ export class GameEngine {
 
   destroy(): void {
     this.destroyed = true;
+    this.views.attach(null);
+    this.oblique = null;
     cancelAnimationFrame(this.raf);
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.audio.stopBgm();
