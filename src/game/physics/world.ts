@@ -42,6 +42,16 @@ export interface DeviceBodyOptions {
   angle: number;
 }
 
+/**
+ * Mac Pro (Late 2013) の角丸半径。
+ * 2D では円筒を真横から見た矩形（直径×高さ）になる。上下面は平らなので起立して積め、
+ * 角を丸めることで傾いたときに円筒の縁のように転がって倒れやすくする。
+ * 画面奥方向への転がりは2D物理では表せないため、円（転がり続ける）ではなく矩形で近似する。
+ */
+export function macPro2013ChamferRadius(wCells: number, hCells: number): number {
+  return Math.min(10, (wCells * CELL) / 4, (hCells * CELL) / 3);
+}
+
 /** デバイスの物理ボディを作る。断片の場合は面積比で質量を按分する */
 export function createDeviceBody(o: DeviceBodyOptions): Matter.Body {
   const spec = DEVICES[o.kind];
@@ -51,6 +61,7 @@ export function createDeviceBody(o: DeviceBodyOptions): Matter.Body {
     frictionAir: 0.004,
     restitution: spec.restitution,
     slop: 0.04,
+    ...(o.kind === 'macPro2013' ? { chamfer: { radius: macPro2013ChamferRadius(o.wCells, o.hCells) } } : {}),
     label: `device:${o.kind}`,
   });
   const areaRatio = (o.wCells * o.hCells) / (spec.w * spec.h);

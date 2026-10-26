@@ -4,6 +4,7 @@
  */
 import { CELL } from '../config';
 import { DEVICES, type DeviceKind } from '../../data/devices';
+import { drawMacPro2013Body } from './macPro2013Sprite';
 
 export interface SpriteKey {
   kind: DeviceKind;
@@ -33,21 +34,26 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
   const pad = 1.2;
   const r = key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
 
-  // 本体（アルミ風グラデーション）
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, spec.body);
-  g.addColorStop(1, spec.bodyDark);
-  roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, r);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.lineWidth = 1.4;
-  ctx.strokeStyle = 'rgba(20,24,30,0.75)';
-  ctx.stroke();
+  if (key.kind === 'macPro2013') {
+    // 黒い円筒：正面は円筒を真横から見たシルエット＋曲面の光沢（アルミ本体・上面ハイライトは描かない）
+    drawMacPro2013Body(ctx, w, h, CELL);
+  } else {
+    // 本体（アルミ風グラデーション）
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, spec.body);
+    g.addColorStop(1, spec.bodyDark);
+    roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, r);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = 'rgba(20,24,30,0.75)';
+    ctx.stroke();
 
-  // 上面ハイライト
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
-  ctx.fill();
+    // 上面ハイライト
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
+    ctx.fill();
+  }
 
   switch (key.kind) {
     case 'miniM1':
@@ -128,11 +134,12 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
 
   // ラベル（製品ロゴではなく、ゲーム内の識別用テキスト）
   if (w >= 30 && h >= 24) {
-    ctx.fillStyle = 'rgba(25,28,34,0.8)';
+    // 黒い筐体では暗い文字が見えないため、Late 2013 だけ明るい文字にする
+    ctx.fillStyle = key.kind === 'macPro2013' ? 'rgba(220,226,236,0.85)' : 'rgba(25,28,34,0.8)';
     ctx.font = `bold ${key.kind === 'miniM4' ? 8 : 9}px system-ui, sans-serif`;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    const ly = key.kind === 'pro' ? Math.min(h - 6, h * 0.92) : h * 0.4;
+    const ly = key.kind === 'pro' ? Math.min(h - 6, h * 0.92) : key.kind === 'macPro2013' ? Math.min(h - 8, h * 0.82) : h * 0.4;
     ctx.fillText(spec.label, 6, ly);
   }
 
