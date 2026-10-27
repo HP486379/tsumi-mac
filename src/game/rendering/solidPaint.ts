@@ -4,7 +4,7 @@ import type { BoxSolid, CylinderSolid, EllipseSpec, Pt } from './solidGeometry';
 export interface PaintCtx {
   fillStyle: unknown; strokeStyle: unknown; lineWidth: number; lineJoin: string;
   beginPath(): void; moveTo(x: number, y: number): void; lineTo(x: number, y: number): void; closePath(): void;
-  fill(): void; stroke(): void;
+  fill(): void; stroke(): void; quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
   ellipse(x: number, y: number, rx: number, ry: number, rot: number, a0: number, a1: number): void;
   createLinearGradient(x0: number, y0: number, x1: number, y1: number): { addColorStop(o: number, c: string): void };
 }
@@ -29,9 +29,46 @@ function fillSeam(ctx: PaintCtx, color: string): void {
   ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 0.8; ctx.lineJoin = 'round';
   ctx.fill(); ctx.stroke();
 }
-/** 側面だけを描く（前面は呼び出し側が既存スプライトで重ねる）。 */
-export function paintBoxSides(ctx: PaintCtx, solid: BoxSolid, palette: Palette): void {
-  for (const f of solid.sides) { poly(ctx, f.points); fillSeam(ctx, shadedColor(palette, f.shade)); }
+/** A softly bevelled silhouette for each extruded face, including the far corners. */
+function roundedQuad(ctx: PaintCtx, pts: readonly Pt[], radius: number): void {
+  const corners = pts.map((p, i) => {
+    const prev = pts[(i + pts.length - 1) % pts.length]!;
+    const next = pts[(i + 1) % pts.length]!;
+    const d0 = Math.hypot(prev.x - p.x, prev.y - p.y);
+    const d1 = Math.hypot(next.x - p.x, next.y - p.y);
+    const r = Math.min(radius, d0 * 0.28, d1 * 0.28);
+    return {
+      enter: { x: p.x + (prev.x - p.x) * r / (d0 || 1), y: p.y + (prev.y - p.y) * r / (d0 || 1) },
+      exit: { x: p.x + (next.x - p.x) * r / (d1 || 1), y: p.y + (next.y - p.y) * r / (d1 || 1) },
+      p,
+    };
+  });
+  ctx.beginPath();
+  ctx.moveTo(corners[0]!.enter.x, corners[0]!.enter.y);
+  for (const c of corners) {
+    ctx.quadraticCurveTo(c.p.x, c.p.y, c.exit.x, c.exit.y);
+    const next = corners[(corners.indexOf(c) + 1) % corners.length]!;
+    ctx.lineTo(next.enter.x, next.enter.y);
+  }
+  ctx.closePath();
+}
+
+/** Rounded metal enclosure: soft far corners and a narrow chamfer along the front lip. */
+export function paintBoxSides(ctx: PaintCtx, solid: BoxSolid, palette: Palette, radius = 5): void {
+  for (const f of solid.sides) {
+    roundedQuad(ctx, f.points, radius);
+    fillSeam(ctx, shadedColor(palette, f.shade));
+    const a = f.points[0], b = f.points[1];
+    const vx = b.x - a.x, vy = b.y - a.y;
+    const length = Math.hypot(vx, vy) || 1;
+    const inset = Math.min(radius * 0.35, 2.2);
+    ctx.beginPath();
+    ctx.moveTo(a.x + vx / length * Math.min(radius, length * 0.2), a.y + vy / length * Math.min(radius, length * 0.2));
+    ctx.lineTo(b.x - vx / length * Math.min(radius, length * 0.2), b.y - vy / length * Math.min(radius, length * 0.2));
+    ctx.strokeStyle = shadedColor(palette, 0.93);
+    ctx.lineWidth = inset;
+    ctx.stroke();
+  }
 }
 function ellipsePath(ctx: PaintCtx, e: EllipseSpec): void {
   ctx.beginPath(); ctx.ellipse(e.cx, e.cy, e.rx, e.ry, e.rotation, 0, Math.PI * 2);
