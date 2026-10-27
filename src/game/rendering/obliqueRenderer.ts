@@ -8,15 +8,16 @@ import {
   type CylinderSolid,
 } from './solidGeometry';
 import { ChassisRenderer } from './chassisRenderer';
+import { CAMERA, projectWorld } from './chassisProjection';
 
 export const OBLIQUE_W = 400;
 export const OBLIQUE_H = 704;
-const A = 0.84, B = 0.12, D = 0.9, TX = 28, TY = 38;
+const { a: A, b: B, d: D, tx: TX, ty: TY } = CAMERA;
 type Point = { x: number; y: number };
 
 /** One affine contact plane: touching points stay touching after projection. */
 export function projectPoint(x: number, y: number): Point {
-  return { x: TX + A * x, y: TY + B * x + D * y };
+  return projectWorld(x, y);
 }
 
 /** Depth in px = official depth(cm) x (front width px / official width cm). Per-model, not a shared factor. */

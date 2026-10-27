@@ -1,6 +1,6 @@
 import { chassisMesh, modelDimensions, type V3 } from './chassisMesh';
 import type { RenderItem } from './renderer';
-import { CELL } from '../config';
+import { chassisPose, projectWorld, worldFromLocal } from './chassisProjection';
 
 /** Canvas fallback for devices with WebGL disabled. Shares the mesh and a single
  * per-pixel Z buffer, so fallback never reintroduces the sprite/box seam. */
@@ -16,10 +16,10 @@ export class SoftwareChassis {
     for(const item of items) {
       const key=JSON.stringify(item.key);let mesh=this.cache.get(key);
       if(!mesh) {mesh=chassisMesh(item);this.cache.set(key,mesh);}
-      const dim=modelDimensions(item),c=Math.cos(item.angle),s=Math.sin(item.angle),offset=(item.key.hCells*CELL-dim.h)/2;
+      const dim=modelDimensions(item),pose=chassisPose(item),c=Math.cos(item.angle),s=Math.sin(item.angle);
       const vertices=mesh.map(v=>{
-        const x=item.x+c*v.p[0]-s*(v.p[1]+offset),y=item.y+s*v.p[0]+c*(v.p[1]+offset);
-        return {x:(28+.84*x+.42*v.p[2])*scale,y:(38+.12*x+.9*y-.273*v.p[2])*scale,p:v.p,n:v.n};
+        const world=worldFromLocal(pose,v.p),screen=projectWorld(...world);
+        return {x:screen.x*scale,y:screen.y*scale,p:v.p,n:v.n};
       });
       for(let i=0;i<vertices.length;i+=3) {
         const a=vertices[i]!,b=vertices[i+1]!,d=vertices[i+2]!;
@@ -34,7 +34,8 @@ export class SoftwareChassis {
           zBuffer[idx]=z;
           const p=a.p.map((n,j)=>u*n+v*b.p[j]!+t*d.p[j]!) as V3;
           const nn=a.n.map((n,j)=>u*n+v*b.n[j]!+t*d.n[j]!) as V3,len=Math.hypot(...nn)||1;
-          const n=nn.map(n=>n/len) as V3,world:V3=[c*n[0]-s*n[1],s*n[0]+c*n[1],n[2]];
+          const n=nn.map(n=>n/len) as V3,scaled:V3=[n[0]/pose.sx,n[1]/pose.sy,n[2]],normalLength=Math.hypot(...scaled);
+          const world:V3=[(c*scaled[0]-s*scaled[1])/normalLength,(s*scaled[0]+c*scaled[1])/normalLength,scaled[2]/normalLength];
           const dot=Math.max(0,(-.35*world[0]-.8*world[1]-.6*world[2])/1.059),light=.68+.38*dot;
           let color=[.70*light,.73*light,.77*light];
           if(item.key.kind==='macPro2013') {

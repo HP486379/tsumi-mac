@@ -1,6 +1,6 @@
-/** Oblique-only physical model. All dimensions use one uniform px/cm scale.
- * The grid remains the collision authority; smaller real silhouettes are bottom
- * aligned inside it. No independent depth squash or front sprite is used. */
+/** Oblique model-space geometry uses one px/cm scale. chassisProjection maps
+ * its XY envelope to Matter's dimensions and pivot; Z retains the model depth.
+ * No independent depth squash or front sprite is used. */
 import { DEVICES } from '../../data/devices';
 import { OFFICIAL_DIMENSIONS } from '../../data/officialDimensions';
 import { CELL } from '../config';

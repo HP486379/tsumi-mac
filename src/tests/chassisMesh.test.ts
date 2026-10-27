@@ -6,8 +6,8 @@ import type { RenderItem } from '../game/rendering/renderer';
 import { CELL } from '../game/config';
 
 const item=(kind:DeviceKind):RenderItem=>({x:180,y:300,angle:0,active:false,key:{kind,wCells:DEVICES[kind].w,hCells:DEVICES[kind].h,refurb:false,cutTop:false,cutBottom:false}});
-describe('unified physical chassis',()=>{
-  it.each(DEVICE_KINDS)('%s uses the same physical scale on all three axes',kind=>{
+describe('model-space chassis geometry',()=>{
+  it.each(DEVICE_KINDS)('%s uses a uniform model-space scale before the Matter XY mapping',kind=>{
     const d=modelDimensions(item(kind)),official=OFFICIAL_DIMENSIONS[kind];
     expect(d.w/official.widthCm).toBeCloseTo(d.h/official.heightCm);
     expect(d.depth/official.depthCm).toBeCloseTo(d.h/official.heightCm);

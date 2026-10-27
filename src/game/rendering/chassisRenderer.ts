@@ -1,18 +1,19 @@
 import { chassisMesh, modelDimensions } from './chassisMesh';
-import { CELL } from '../config';
+import { CAMERA, chassisPose } from './chassisProjection';
 import type { RenderItem } from './renderer';
 import { SoftwareChassis } from './softwareChassis';
 
-const vertex = `
+export const CHASSIS_VERTEX_SHADER = `
 attribute vec3 position, normal;
 uniform vec4 pose;
 uniform vec2 viewport;
+uniform vec2 xyScale;
 varying vec3 local, norm, surface;
 void main() {
   mat2 rotation=mat2(cos(pose.z),sin(pose.z),-sin(pose.z),cos(pose.z));
-  local=position; surface=normal; norm=vec3(rotation*normal.xy,normal.z);
-  vec2 p=pose.xy+rotation*position.xy;
-  vec2 screen=vec2(28.+.84*p.x+.42*position.z,38.+.12*p.x+.9*p.y-.273*position.z);
+  local=position; surface=normal; norm=vec3(rotation*(normal.xy/xyScale),normal.z);
+  vec2 p=pose.xy+rotation*(position.xy*xyScale);
+  vec2 screen=vec2(${CAMERA.tx.toFixed(6)}+${CAMERA.a.toFixed(6)}*p.x+${CAMERA.zx.toFixed(6)}*position.z,${CAMERA.ty.toFixed(6)}+${CAMERA.b.toFixed(6)}*p.x+${CAMERA.d.toFixed(6)}*p.y+${CAMERA.zy.toFixed(6)}*position.z);
   gl_Position=vec4(screen/viewport*vec2(2.,-2.)+vec2(-1.,1.),position.z/1024.,1.);
 }`;
 const fragment = `
@@ -85,10 +86,10 @@ class GpuChassisRenderer {
       return shader;
     };
     const program=gl.createProgram()!;
-    gl.attachShader(program,compile(gl.VERTEX_SHADER,vertex));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
+    gl.attachShader(program,compile(gl.VERTEX_SHADER,CHASSIS_VERTEX_SHADER));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'Chassis shader link');
     this.program=program;
-    for(const name of ['viewport','pose','dimensions','kind','active','refurb','cutTop','cutBottom']) this.uniforms[name]=gl.getUniformLocation(program,name);
+    for(const name of ['viewport','pose','xyScale','dimensions','kind','active','refurb','cutTop','cutBottom']) this.uniforms[name]=gl.getUniformLocation(program,name);
     for(const name of ['position','normal'])this.attributes[name]=gl.getAttribLocation(program,name);
   }
   draw(items:readonly RenderItem[],width:number,height:number):HTMLCanvasElement {
@@ -111,9 +112,9 @@ class GpuChassisRenderer {
         const loc=this.attributes[name]!;gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,24,offset);
       }
       const dim=modelDimensions(item);
-      // Bottom alignment takes place in local coordinates BEFORE rotation.
-      const offset=(item.key.hCells*CELL-dim.h)/2;
-      gl.uniform4f(uniform('pose'),item.x-Math.sin(item.angle)*offset,item.y+Math.cos(item.angle)*offset,item.angle,0);
+      const pose=chassisPose(item);
+      gl.uniform4f(uniform('pose'),pose.x,pose.y,pose.angle,0);
+      gl.uniform2f(uniform('xyScale'),pose.sx,pose.sy);
       gl.uniform3f(uniform('dimensions'),dim.w,dim.h,dim.depth);
       gl.uniform1f(uniform('kind'),item.key.kind==='macPro2013'?3:item.key.kind==='pro'?2:item.key.kind==='studio'||item.key.kind==='miniM4'?1:0);
       for(const [name,value] of [['active',item.active],['refurb',item.key.refurb],['cutTop',item.key.cutTop],['cutBottom',item.key.cutBottom]] as const) gl.uniform1f(uniform(name),value?1:0);

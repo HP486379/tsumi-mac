@@ -1,5 +1,7 @@
 # 斜めビューの筐体再設計と検証
 
+この文書は `oblique-unified-chassis` 作成時点の履歴です。後続の[同期精度検証](../sync-validation/README.md)で、ユーザーの選択により描画時のXY寸法と回転中心を物理セルへ一致させました。以下の寸法表はモデル空間の値であり、現在の投影後XY倍率を表すものではありません。
+
 基準: `chassis-rounded-solid-v2` / `30d730885bc4baf6637bc9029b49240b3a9e5dc5`。
 作業ブランチ: `oblique-unified-chassis`。検証日: 2026-10-27（日本時間）。
 
