@@ -25,9 +25,26 @@ export function depthPx(kind: DeviceKind): number {
   return dim.depthCm * pxPerCm(dim, DEVICES[kind].w * CELL);
 }
 
-function depthVec(kind: DeviceKind): Point {
+/**
+ * Visual shell thickness, not physical footprint depth.
+ *
+ * The front sprites show the device's narrow face. Extruding by the complete
+ * official front-to-back dimension made a separate, oversized rectangular
+ * container behind every Mac. The technical dimensions remain available via
+ * depthPx(), but the auxiliary illustration uses a deliberately compressed
+ * silhouette. Mini/Studio are low-profile; the tower stays deeper.
+ */
+export function visualDepthVec(kind: DeviceKind, wCells = DEVICES[kind].w): Point {
   const dim = OFFICIAL_DIMENSIONS[kind];
-  return depthVector(dim, pxPerCm(dim, DEVICES[kind].w * CELL));
+  const frontWidth = wCells * CELL;
+  const officialProjected = dim.depthCm * pxPerCm(dim, DEVICES[kind].w * CELL);
+  const ratio = kind === 'pro' ? 0.30 : kind === 'studio' ? 0.16 : kind === 'miniM4' ? 0.13 : 0.12;
+  const maxDepth = frontWidth * ratio;
+  const effective = Math.min(officialProjected, maxDepth);
+  return { x: DEPTH_DIR.x * effective, y: DEPTH_DIR.y * effective };
+}
+function depthVec(kind: DeviceKind): Point {
+  return visualDepthVec(kind);
 }
 
 export function projectedDevice(item: RenderItem): { front: Point[]; back: Point[] } {
@@ -112,19 +129,10 @@ export class ObliqueRenderer {
     ctx.drawImage(this.background, 0, 0);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-    // Draw extrusion first; never let a decorative side hide another front face
-    // or imply a second contact location. Do not mutate RenderState.
-    // Only faces turned toward the viewer are painted (top/right of a box; caps + curved side
-    // of a cylinder), so solids are closed: no back face, no see-through, no hollow box.
-    // Side faces are ordered far->near on a copy; front sprites below keep RenderState order.
-    for (const item of sortedForDrawing(state.items)) {
-      if (isCylinder(item.key.kind)) {
-        paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
-      } else {
-        const { front } = projectedDevice(item);
-        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind]);
-      }
-    }
+    // Compact illustrated shells: avoid the oversized rectangular boxes of v4.
+    // Physics and the official dimension ledger are unchanged.
+    // Guides and row flashes belong to the projected contact plane.
+    ctx.save();
     ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
     if (state.guide) {
       ctx.fillStyle = '#7fd3ff12';
@@ -134,17 +142,36 @@ export class ObliqueRenderer {
       ctx.fillStyle = `rgba(255,240,170,${Math.min(0.75, f.life * 1.5)})`;
       ctx.fillRect(0, f.row * CELL, FIELD_W, CELL);
     }
-    for (const item of state.items) {
+    ctx.restore();
+
+    // Each object's sides and front are composited together, far-to-near.
+    // This prevents a distant shell from being painted over a nearer front.
+    for (const item of sortedForDrawing(state.items)) {
       const w = item.key.wCells * CELL, h = item.key.hCells * CELL;
-      ctx.save(); ctx.translate(item.x, item.y); ctx.rotate(item.angle);
-      // The cylinder is fully drawn as a solid above; a flat front sprite would hide its curved side.
-      if (!isCylinder(item.key.kind)) ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
-      if (item.active) {
-        ctx.strokeStyle = '#7fd3ff'; ctx.lineWidth = 1.5;
-        ctx.strokeRect(-w / 2, -h / 2, w, h);
+      if (isCylinder(item.key.kind)) {
+        paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
+      } else {
+        const { front } = projectedDevice(item);
+        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind]);
+        ctx.save();
+        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.angle);
+        ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
+        ctx.restore();
       }
-      ctx.restore();
+      if (item.active) {
+        ctx.save();
+        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.angle);
+        ctx.strokeStyle = '#7fd3ff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
     }
+    ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
     ctx.strokeStyle = state.dangerRatio > 0 ? '#ff4a5e' : '#ff4a5e88';
     ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
     this.line(ctx, { x: 0, y: DANGER_Y }, { x: FIELD_W, y: DANGER_Y });
