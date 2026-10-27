@@ -69,7 +69,9 @@ export function chassisMesh(item: RenderItem): MeshVertex[] {
   };
   if(tower) for(const x of [-w*.39,w*.39]) {
     if(!item.key.cutTop) {
-      const y=-h/2+1.6,z0=depth*.16,z1=depth*.84;
+      // The rail radius is 1.2: its upper surface must reach -h/2 so an
+      // inverted tower rests on the same plane as its Matter envelope.
+      const y=-h/2+1.2,z0=depth*.16,z1=depth*.84;
       tube([x,-h/2+topTrim,z0],[x,y,z0],1.2);
       tube([x,y,z0],[x,y,z1],1.2);
       tube([x,y,z1],[x,-h/2+topTrim,z1],1.2);
