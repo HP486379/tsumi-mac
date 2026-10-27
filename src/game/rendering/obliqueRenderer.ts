@@ -59,6 +59,12 @@ export function sortedForDrawing(items: readonly RenderItem[]): RenderItem[] {
 
 const isCylinder = (kind: DeviceKind): boolean => OFFICIAL_DIMENSIONS[kind].shape === 'cylinder';
 
+/** Logical-pixel corner radius. Keep a small radius on fragments and on the tower. */
+export function chassisRadius(kind: DeviceKind, w: number, h: number): number {
+  const nominal = kind === 'pro' ? 5 : kind === 'studio' ? 9 : kind === 'miniM4' ? 6 : 7;
+  return Math.min(nominal, w * 0.2, h * 0.2);
+}
+
 /** Read-only pseudo-3D view. Existing model sprites are shared with the front. */
 export class ObliqueRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -122,7 +128,7 @@ export class ObliqueRenderer {
         paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
       } else {
         const { front } = projectedDevice(item);
-        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind]);
+        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind], chassisRadius(item.key.kind, item.key.wCells * CELL, item.key.hCells * CELL) * 0.9);
       }
     }
     ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
@@ -138,7 +144,14 @@ export class ObliqueRenderer {
       const w = item.key.wCells * CELL, h = item.key.hCells * CELL;
       ctx.save(); ctx.translate(item.x, item.y); ctx.rotate(item.angle);
       // The cylinder is fully drawn as a solid above; a flat front sprite would hide its curved side.
-      if (!isCylinder(item.key.kind)) ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
+      if (!isCylinder(item.key.kind)) {
+        // The front artwork must share the rounded silhouette of the extruded shell.
+        // Clipping only the auxiliary view preserves the original front-view sprites.
+        ctx.beginPath();
+        ctx.roundRect(-w / 2, -h / 2, w, h, chassisRadius(item.key.kind, w, h));
+        ctx.clip();
+        ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
+      }
       if (item.active) {
         ctx.strokeStyle = '#7fd3ff'; ctx.lineWidth = 1.5;
         ctx.strokeRect(-w / 2, -h / 2, w, h);
