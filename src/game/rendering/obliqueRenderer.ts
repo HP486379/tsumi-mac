@@ -58,6 +58,11 @@ export function sortedForDrawing(items: readonly RenderItem[]): RenderItem[] {
 }
 
 const isCylinder = (kind: DeviceKind): boolean => OFFICIAL_DIMENSIONS[kind].shape === 'cylinder';
+/** Corner radius in logical front-plane pixels, not a depth reduction. */
+export function chassisRadius(kind: DeviceKind, w: number, h: number): number {
+  const r = kind === 'pro' ? 5 : kind === 'studio' ? 8 : kind === 'miniM4' ? 5 : 6;
+  return Math.min(r, w * 0.2, h * 0.2);
+}
 
 /** Read-only pseudo-3D view. Existing model sprites are shared with the front. */
 export class ObliqueRenderer {
@@ -112,19 +117,8 @@ export class ObliqueRenderer {
     ctx.drawImage(this.background, 0, 0);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-    // Draw extrusion first; never let a decorative side hide another front face
-    // or imply a second contact location. Do not mutate RenderState.
-    // Only faces turned toward the viewer are painted (top/right of a box; caps + curved side
-    // of a cylinder), so solids are closed: no back face, no see-through, no hollow box.
-    // Side faces are ordered far->near on a copy; front sprites below keep RenderState order.
-    for (const item of sortedForDrawing(state.items)) {
-      if (isCylinder(item.key.kind)) {
-        paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
-      } else {
-        const { front } = projectedDevice(item);
-        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind]);
-      }
-    }
+    // Guides and flashes remain on the same contact plane as the main view.
+    ctx.save();
     ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
     if (state.guide) {
       ctx.fillStyle = '#7fd3ff12';
@@ -134,17 +128,39 @@ export class ObliqueRenderer {
       ctx.fillStyle = `rgba(255,240,170,${Math.min(0.75, f.life * 1.5)})`;
       ctx.fillRect(0, f.row * CELL, FIELD_W, CELL);
     }
-    for (const item of state.items) {
+    ctx.restore();
+
+    // Paint each solid together with its front, far-to-near. Never draw all
+    // grey extrusions first and all sprites afterwards: that breaks occlusion.
+    for (const item of sortedForDrawing(state.items)) {
       const w = item.key.wCells * CELL, h = item.key.hCells * CELL;
-      ctx.save(); ctx.translate(item.x, item.y); ctx.rotate(item.angle);
-      // The cylinder is fully drawn as a solid above; a flat front sprite would hide its curved side.
-      if (!isCylinder(item.key.kind)) ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
+      if (isCylinder(item.key.kind)) {
+        paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
+      } else {
+        const { front } = projectedDevice(item);
+        const radius = chassisRadius(item.key.kind, w, h);
+        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind], radius);
+        ctx.save();
+        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.angle);
+        ctx.beginPath();
+        ctx.roundRect(-w / 2, -h / 2, w, h, radius);
+        ctx.clip();
+        ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
       if (item.active) {
+        ctx.save();
+        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.angle);
         ctx.strokeStyle = '#7fd3ff'; ctx.lineWidth = 1.5;
         ctx.strokeRect(-w / 2, -h / 2, w, h);
+        ctx.restore();
       }
-      ctx.restore();
     }
+    ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
     ctx.strokeStyle = state.dangerRatio > 0 ? '#ff4a5e' : '#ff4a5e88';
     ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
     this.line(ctx, { x: 0, y: DANGER_Y }, { x: FIELD_W, y: DANGER_Y });
