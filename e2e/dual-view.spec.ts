@@ -16,15 +16,21 @@ test('dual view uses the same live frame through movement, rotation, clearing an
     expect(pair.obliqueFrames).toBeGreaterThan(0);
   };
   await checkSync();
-  const yBeforeToggle = (await state(page)).activeY!;
+  // Test input isolation with the clock stopped: elapsed focus/layout time
+  // must not be mistaken for a Space hard drop on slower GPU runners.
+  await page.keyboard.press('KeyP');
+  const beforeToggle = await state(page);
   await page.getByTestId('oblique-panel').locator('summary').focus();
   await page.keyboard.press('Space');
   await expect(page.getByTestId('oblique-panel')).not.toHaveAttribute('open');
   await page.waitForTimeout(100);
-  expect((await state(page)).activeY! - yBeforeToggle).toBeLessThan(40);
+  expect((await state(page)).activeY).toBe(beforeToggle.activeY);
+  expect((await state(page)).steps).toBe(beforeToggle.steps);
+  expect((await state(page)).score.devices).toBe(beforeToggle.score.devices);
   await page.keyboard.press('Space');
   await checkSync();
   await page.getByTestId('oblique-panel').locator('summary').evaluate(el => (el as HTMLElement).blur());
+  await page.getByTestId('resume-button').click();
   const x = (await state(page)).activeX!;
   await page.keyboard.press('ArrowLeft');
   await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(36, 0);

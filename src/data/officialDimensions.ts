@@ -14,7 +14,7 @@ export interface OfficialDimension {
 }
 
 export const OFFICIAL_DIMENSIONS: Record<DeviceKind, OfficialDimension> = {
-  miniM1: { id: 'miniM1', label: 'Mac mini (M1, 2020)', shape: 'box', widthCm: 19.7, heightCm: 3.58, depthCm: 19.7, weightKg: null, status: 'user-supplied', sourceUrl: 'https://support.apple.com/ja-jp/111837', note: 'M1/M2共通の参考値（ユーザー提示）。M1専用ページは未取得。' },
+  miniM1: { id: 'miniM1', label: 'Mac mini (M1, 2020)', shape: 'box', widthCm: 19.7, heightCm: 3.6, depthCm: 19.7, weightKg: 1.2, status: 'official', sourceUrl: 'https://support.apple.com/ja-jp/111894' },
   miniM2: { id: 'miniM2', label: 'Mac mini (2023, M2/M2 Pro)', shape: 'box', widthCm: 19.7, heightCm: 3.58, depthCm: 19.7, weightKg: 1.18, status: 'official', sourceUrl: 'https://support.apple.com/ja-jp/111837' },
   miniM4: { id: 'miniM4', label: 'Mac mini (2024, M4/M4 Pro)', shape: 'box', widthCm: 12.7, heightCm: 5.0, depthCm: 12.7, weightKg: 0.67, status: 'official', sourceUrl: 'https://support.apple.com/ja-jp/121555' },
   studio: { id: 'studio', label: 'Mac Studio (2023)', shape: 'box', widthCm: 19.7, heightCm: 9.5, depthCm: 19.7, weightKg: 2.7, status: 'official', sourceUrl: 'https://support.apple.com/ja-jp/111835' },

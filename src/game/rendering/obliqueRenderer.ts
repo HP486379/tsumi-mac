@@ -4,10 +4,10 @@ import { CELL, DANGER_Y, FIELD_H, FIELD_W } from '../config';
 import type { RenderItem, RenderState } from './renderer';
 import type { SpriteCache } from './sprites';
 import {
-  DEPTH_DIR, buildBoxSolid, buildCylinderSolid, depthVector, drawOrderKey, pxPerCm,
+  DEPTH_DIR, buildCylinderSolid, depthVector, drawOrderKey, pxPerCm,
   type CylinderSolid,
 } from './solidGeometry';
-import { paintBoxSides, paintCylinderSolid, type PaintCtx } from './solidPaint';
+import { ChassisRenderer } from './chassisRenderer';
 
 export const OBLIQUE_W = 400;
 export const OBLIQUE_H = 704;
@@ -57,22 +57,22 @@ export function sortedForDrawing(items: readonly RenderItem[]): RenderItem[] {
     .map(e => e.item);
 }
 
-const isCylinder = (kind: DeviceKind): boolean => OFFICIAL_DIMENSIONS[kind].shape === 'cylinder';
 /** Corner radius in logical front-plane pixels, not a depth reduction. */
 export function chassisRadius(kind: DeviceKind, w: number, h: number): number {
   const r = kind === 'pro' ? 5 : kind === 'studio' ? 8 : kind === 'miniM4' ? 5 : 6;
   return Math.min(r, w * 0.2, h * 0.2);
 }
 
-/** Read-only pseudo-3D view. Existing model sprites are shared with the front. */
+/** Read-only solid view. The constructor keeps the front cache argument for compatibility. */
 export class ObliqueRenderer {
   private ctx: CanvasRenderingContext2D;
   private background: HTMLCanvasElement | null = null;
   private scale = 1;
+  private chassis = new ChassisRenderer();
   frames = 0;
   lastState: RenderState | null = null;
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly sprites: SpriteCache) {
+  constructor(private readonly canvas: HTMLCanvasElement, _sprites: SpriteCache) {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D context unavailable');
     this.ctx = ctx;
@@ -130,36 +130,7 @@ export class ObliqueRenderer {
     }
     ctx.restore();
 
-    // Paint each solid together with its front, far-to-near. Never draw all
-    // grey extrusions first and all sprites afterwards: that breaks occlusion.
-    for (const item of sortedForDrawing(state.items)) {
-      const w = item.key.wCells * CELL, h = item.key.hCells * CELL;
-      if (isCylinder(item.key.kind)) {
-        paintCylinderSolid(ctx as unknown as PaintCtx, projectedCylinder(item));
-      } else {
-        const { front } = projectedDevice(item);
-        const radius = chassisRadius(item.key.kind, w, h);
-        paintBoxSides(ctx as unknown as PaintCtx, buildBoxSolid(front, depthVec(item.key.kind)), DEVICES[item.key.kind], radius);
-        ctx.save();
-        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
-        ctx.translate(item.x, item.y);
-        ctx.rotate(item.angle);
-        ctx.beginPath();
-        ctx.roundRect(-w / 2, -h / 2, w, h, radius);
-        ctx.clip();
-        ctx.drawImage(this.sprites.get(item.key), -w / 2, -h / 2, w, h);
-        ctx.restore();
-      }
-      if (item.active) {
-        ctx.save();
-        ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
-        ctx.translate(item.x, item.y);
-        ctx.rotate(item.angle);
-        ctx.strokeStyle = '#7fd3ff'; ctx.lineWidth = 1.5;
-        ctx.strokeRect(-w / 2, -h / 2, w, h);
-        ctx.restore();
-      }
-    }
+    ctx.drawImage(this.chassis.draw(state.items, this.canvas.width, this.canvas.height), 0, 0, OBLIQUE_W, OBLIQUE_H);
     ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, TY * scale);
     ctx.strokeStyle = state.dangerRatio > 0 ? '#ff4a5e' : '#ff4a5e88';
     ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
