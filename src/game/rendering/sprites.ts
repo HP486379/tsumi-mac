@@ -5,8 +5,11 @@
 import { CELL } from '../config';
 import { DEVICES, type DeviceKind } from '../../data/devices';
 import { drawMacPro2013Body } from './macPro2013Sprite';
+import type { FragmentGeometry,GameMode } from '../../data/gameModes';
 
 export interface SpriteKey {
+  mode?:GameMode;
+  geometry?:FragmentGeometry;
   kind: DeviceKind;
   wCells: number;
   hCells: number;
@@ -28,6 +31,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 /** ローカル座標（左上0,0、幅w・高さh、論理px）でデバイスを描く */
 export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void {
+  if(key.mode==='real'){drawRealDevice(ctx,key);return;}
   const spec = DEVICES[key.kind];
   const w = key.wCells * CELL;
   const h = key.hCells * CELL;
@@ -171,6 +175,29 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
   if (key.cutBottom) jag(h - 2.5, -1);
 }
 
+/** Front projection in the same real-world XY coordinates as the collider. */
+function drawRealDevice(ctx:CanvasRenderingContext2D,key:SpriteKey):void {
+ const w=key.wCells*CELL,h=key.hCells*CELL;
+ if(key.kind==='macPro2013'){drawMacPro2013Body(ctx,w,h,CELL);return;}
+ const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#d2d6dc');g.addColorStop(1,'#a8aeb8');ctx.fillStyle=g;
+ roundRect(ctx,.15,.15,w-.3,h-.3,Math.min(1.2,h*.08));ctx.fill();
+ ctx.fillStyle='#4d535c';ctx.fillRect(w*.1,h-.7,w*.8,.55);
+ if(key.kind==='pro'){
+   ctx.fillStyle='#4e5661';for(let y=8;y<h-7;y+=4)for(let x=6+(Math.round(y/4)%2)*2;x<w-5;x+=4){ctx.beginPath();ctx.arc(x,y,1.15,0,Math.PI*2);ctx.fill();}
+   ctx.strokeStyle='#e4e6eb';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(w*.12,1);ctx.lineTo(w*.88,1);ctx.stroke();
+ } else {
+   ctx.fillStyle='#2a3039';
+   if(key.kind==='miniM4'||key.kind==='studio'){
+     const py=h*.63;
+     for(const x of [w*.23,w*.38]){roundRect(ctx,x,py-1,w*.065,1.5,.5);ctx.fill();}
+     if(key.kind==='miniM4'){ctx.beginPath();ctx.arc(w*.69,py,.65,0,Math.PI*2);ctx.fill();}
+     else ctx.fillRect(w*.52,py,w*.2,.7);
+   }
+   ctx.fillStyle='#e3f6e8';ctx.beginPath();ctx.arc(w*.85,h*.6,.55,0,Math.PI*2);ctx.fill();
+ }
+ if(key.refurb){ctx.fillStyle='#21a366';roundRect(ctx,w-10,1,8,3,1);ctx.fill();}
+}
+
 export class SpriteCache {
   private cache = new Map<string, HTMLCanvasElement>();
   private scale = 1;
@@ -183,7 +210,7 @@ export class SpriteCache {
   }
 
   get(key: SpriteKey): HTMLCanvasElement {
-    const id = `${key.kind}|${key.wCells}x${key.hCells}|${key.refurb ? 1 : 0}${key.cutTop ? 1 : 0}${key.cutBottom ? 1 : 0}`;
+    const id = `${key.mode??'classic'}|${key.kind}|${key.wCells}x${key.hCells}|${key.refurb ? 1 : 0}${key.cutTop ? 1 : 0}${key.cutBottom ? 1 : 0}`;
     let c = this.cache.get(id);
     if (!c) {
       c = document.createElement('canvas');

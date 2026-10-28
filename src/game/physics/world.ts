@@ -2,6 +2,7 @@
 import Matter from 'matter-js';
 import { CELL, FIELD_H, FIELD_W, WALL_THICKNESS } from '../config';
 import { DEVICES, type DeviceKind } from '../../data/devices';
+import { deviceCells,realSize,type GameMode,type FragmentGeometry } from '../../data/gameModes';
 
 // matter-js は CommonJS/UMD のため default import から取り出す（Vite の dev/build 双方で確実に動く形）
 const { Bodies, Body, Composite, Engine } = Matter;
@@ -34,6 +35,8 @@ export function createPhysicsWorld(): PhysicsWorld {
 }
 
 export interface DeviceBodyOptions {
+  mode?:GameMode;
+  geometry?:FragmentGeometry;
   kind: DeviceKind;
   cx: number;
   cy: number;
@@ -55,16 +58,28 @@ export function macPro2013ChamferRadius(wCells: number, hCells: number): number 
 /** デバイスの物理ボディを作る。断片の場合は面積比で質量を按分する */
 export function createDeviceBody(o: DeviceBodyOptions): Matter.Body {
   const spec = DEVICES[o.kind];
-  const body = Bodies.rectangle(o.cx, o.cy, o.wCells * CELL, o.hCells * CELL, {
+  const options = {
     friction: spec.friction,
     frictionStatic: spec.frictionStatic,
     frictionAir: 0.004,
     restitution: spec.restitution,
     slop: 0.04,
-    ...(o.kind === 'macPro2013' ? { chamfer: { radius: macPro2013ChamferRadius(o.wCells, o.hCells) } } : {}),
+    ...(o.kind === 'macPro2013'&&!o.geometry ? { chamfer: { radius: o.mode==='real'?Math.min(o.wCells*CELL*.024,o.hCells*CELL*.15):macPro2013ChamferRadius(o.wCells, o.hCells) } } : {}),
     label: `device:${o.kind}`,
-  });
-  const areaRatio = (o.wCells * o.hCells) / (spec.w * spec.h);
+  };
+  let body:Matter.Body;
+  if(o.geometry)body=Bodies.fromVertices(o.cx,o.cy,[o.geometry.outline.map(p=>({...p}))],options,false,0,0,0);
+  else if(o.mode==='real'&&o.kind==='pro'){
+    const w=o.wCells*CELL,h=o.hCells*CELL;
+    const parts=[Bodies.rectangle(o.cx,o.cy+2,w,h-10,options)];
+    for(const x of [-w*.39,w*.39]){
+      parts.push(Bodies.rectangle(o.cx+x,o.cy-h/2+3.5,2.4,7,options));
+      parts.push(Bodies.rectangle(o.cx+x,o.cy+h/2-1.5,3,3,options));
+    }
+    body=Body.create({...options,parts});Body.setCentre(body,{x:o.cx,y:o.cy});
+  }else body=Bodies.rectangle(o.cx,o.cy,o.wCells*CELL,o.hCells*CELL,options);
+  const cells=deviceCells(o.kind,o.mode??'classic'),full=realSize(o.kind);
+  const areaRatio = o.geometry?body.area/(full.w*full.h):(o.wCells * o.hCells) / (cells.w * cells.h);
   Body.setMass(body, spec.mass * areaRatio);
   if (o.angle !== 0) Body.setAngle(body, o.angle);
   return body;

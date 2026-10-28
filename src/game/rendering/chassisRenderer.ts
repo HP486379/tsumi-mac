@@ -8,10 +8,11 @@ attribute vec3 position, normal;
 uniform vec4 pose;
 uniform vec2 viewport;
 uniform vec2 xyScale;
+uniform vec2 sourceOffset;
 varying vec3 local, norm, surface;
 void main() {
   mat2 rotation=mat2(cos(pose.z),sin(pose.z),-sin(pose.z),cos(pose.z));
-  local=position; surface=normal; norm=vec3(rotation*(normal.xy/xyScale),normal.z);
+  local=position+vec3(sourceOffset,0.); surface=normal; norm=vec3(rotation*(normal.xy/xyScale),normal.z);
   vec2 p=pose.xy+rotation*(position.xy*xyScale);
   vec2 screen=vec2(${CAMERA.tx.toFixed(6)}+${CAMERA.a.toFixed(6)}*p.x+${CAMERA.zx.toFixed(6)}*position.z,${CAMERA.ty.toFixed(6)}+${CAMERA.b.toFixed(6)}*p.x+${CAMERA.d.toFixed(6)}*p.y+${CAMERA.zy.toFixed(6)}*position.z);
   gl_Position=vec4(screen/viewport*vec2(2.,-2.)+vec2(-1.,1.),position.z/1024.,1.);
@@ -21,11 +22,13 @@ precision mediump float;
 varying vec3 local, norm, surface;
 uniform vec3 dimensions;
 uniform float kind, active, refurb, cutTop, cutBottom;
+uniform float realMode, mini4;
 void main() {
   vec3 n=normalize(norm), base=vec3(.70,.73,.77);
   float light=.68+.38*max(0.,dot(n,normalize(vec3(-.35,-.8,-.6))));
   float reflection=.08*pow(max(0.,dot(n,normalize(vec3(-.2,-.6,-1.)))),12.);
   vec3 color=base*light+reflection;
+  if(realMode>.5)color=vec3(.76,.78,.81)*light+reflection;
   float front=1.-step(-.93,surface.z);
   if(kind==3.) {
     color=vec3(.035,.043,.055)+vec3(.26,.29,.33)*pow(max(0.,dot(n,normalize(vec3(-.25,-.2,-1.)))),10.);
@@ -45,7 +48,14 @@ void main() {
     }
     if(front>.5 && kind<2.) {
       float py=local.y/dimensions.y;
-      if(kind==1. && py>.13 && py<.27) {
+      if(mini4>.5){
+        vec2 q=local.xy/dimensions.x;
+        vec2 a=abs(q-vec2(-20./127.,dimensions.y/dimensions.x*.13))-vec2(3.2/127.,.8/127.);
+        vec2 b=abs(q-vec2(-1./127.,dimensions.y/dimensions.x*.13))-vec2(3.2/127.,.8/127.);
+        float hole=min(length(max(a,0.))+min(max(a.x,a.y),0.),length(max(b,0.))+min(max(b.x,b.y),0.))-.65/127.;
+        hole=min(hole,length(q-vec2(24./127.,dimensions.y/dimensions.x*.13))-1.75/127.);
+        color=mix(color,vec3(.045,.052,.06),1.-smoothstep(-.0008,.0016,hole));
+      }else if(kind==1. && py>.13 && py<.27) {
         float x=local.x/dimensions.x;
         if((x>-.33 && x<-.28)||(x>-.21 && x<-.16)) color=vec3(.09,.11,.13);
         if(dimensions.x>50. && x>-.03 && x<.17 && py>.17 && py<.21) color=vec3(.09,.11,.13);
@@ -89,7 +99,7 @@ class GpuChassisRenderer {
     gl.attachShader(program,compile(gl.VERTEX_SHADER,CHASSIS_VERTEX_SHADER));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'Chassis shader link');
     this.program=program;
-    for(const name of ['viewport','pose','xyScale','dimensions','kind','active','refurb','cutTop','cutBottom']) this.uniforms[name]=gl.getUniformLocation(program,name);
+    for(const name of ['viewport','pose','xyScale','sourceOffset','dimensions','kind','active','refurb','cutTop','cutBottom','realMode','mini4']) this.uniforms[name]=gl.getUniformLocation(program,name);
     for(const name of ['position','normal'])this.attributes[name]=gl.getAttribLocation(program,name);
   }
   draw(items:readonly RenderItem[],width:number,height:number):HTMLCanvasElement {
@@ -106,6 +116,7 @@ class GpuChassisRenderer {
         const vertices=chassisMesh(item),buffer=gl.createBuffer()!;
         gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices.flatMap(v=>[...v.p,...v.n])),gl.STATIC_DRAW);
         mesh={buffer,count:vertices.length};this.meshes.set(key,mesh);
+        if(this.meshes.size>256){const oldest=this.meshes.keys().next().value!;gl.deleteBuffer(this.meshes.get(oldest)!.buffer);this.meshes.delete(oldest);}
       }
       gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);
       for(const [name,offset] of [['position',0],['normal',12]] as const) {
@@ -115,7 +126,11 @@ class GpuChassisRenderer {
       const pose=chassisPose(item);
       gl.uniform4f(uniform('pose'),pose.x,pose.y,pose.angle,0);
       gl.uniform2f(uniform('xyScale'),pose.sx,pose.sy);
-      gl.uniform3f(uniform('dimensions'),dim.w,dim.h,dim.depth);
+      const source=item.key.geometry?.source;
+      gl.uniform2f(uniform('sourceOffset'),source?.offsetX??0,source?.offsetY??0);
+      gl.uniform3f(uniform('dimensions'),source?.w??dim.w,source?.h??dim.h,dim.depth);
+      gl.uniform1f(uniform('realMode'),item.key.mode==='real'?1:0);
+      gl.uniform1f(uniform('mini4'),item.key.mode==='real'&&item.key.kind==='miniM4'?1:0);
       gl.uniform1f(uniform('kind'),item.key.kind==='macPro2013'?3:item.key.kind==='pro'?2:item.key.kind==='studio'||item.key.kind==='miniM4'?1:0);
       for(const [name,value] of [['active',item.active],['refurb',item.key.refurb],['cutTop',item.key.cutTop],['cutBottom',item.key.cutBottom]] as const) gl.uniform1f(uniform(name),value?1:0);
       gl.drawArrays(gl.TRIANGLES,0,mesh.count);

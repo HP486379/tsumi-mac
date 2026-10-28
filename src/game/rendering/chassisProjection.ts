@@ -10,6 +10,7 @@ export interface Pose { x: number; y: number; angle: number; sx: number; sy: num
  * This intentionally prioritizes game contacts over uniform real-world scale.
  * Z is unchanged; no depth compression or material change is involved. */
 export function chassisPose(item: RenderItem): Pose {
+  if(item.key.mode==='real')return {x:item.x,y:item.y,angle:item.angle,sx:1,sy:1};
   const dim = modelDimensions(item);
   return { x: item.x, y: item.y, angle: item.angle,
     sx: item.key.wCells * CELL / dim.w, sy: item.key.hCells * CELL / dim.h };

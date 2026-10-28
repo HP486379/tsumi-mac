@@ -1,5 +1,6 @@
 /** ハイスコア・設定の localStorage 永続化 */
 import type { ScoreSnapshot } from './scoring';
+import type { GameMode } from '../../data/gameModes';
 
 export interface HighScore {
   bestSpent: number;
@@ -26,9 +27,9 @@ function storage(): StorageLike | null {
   }
 }
 
-export function loadHighScore(store: StorageLike | null = storage()): HighScore {
+export function loadHighScore(store: StorageLike | null = storage(),mode:GameMode='classic'): HighScore {
   try {
-    const raw = store?.getItem(HS_KEY);
+    const raw = store?.getItem(mode==='real'?HS_KEY+'.real':HS_KEY);
     if (!raw) return { ...EMPTY_HIGHSCORE };
     const v = JSON.parse(raw) as Partial<HighScore>;
     return {
@@ -44,8 +45,8 @@ export function loadHighScore(store: StorageLike | null = storage()): HighScore 
 }
 
 /** 結果を反映して保存。新記録の項目名を返す */
-export function submitResult(s: ScoreSnapshot, store: StorageLike | null = storage()): { hs: HighScore; newRecord: boolean } {
-  const prev = loadHighScore(store);
+export function submitResult(s: ScoreSnapshot, store: StorageLike | null = storage(),mode:GameMode='classic'): { hs: HighScore; newRecord: boolean } {
+  const prev = loadHighScore(store,mode);
   const hs: HighScore = {
     bestSpent: Math.max(prev.bestSpent, Math.round(s.spent)),
     bestLines: Math.max(prev.bestLines, s.lines),
@@ -54,7 +55,7 @@ export function submitResult(s: ScoreSnapshot, store: StorageLike | null = stora
     plays: prev.plays + 1,
   };
   try {
-    store?.setItem(HS_KEY, JSON.stringify(hs));
+    store?.setItem(mode==='real'?HS_KEY+'.real':HS_KEY, JSON.stringify(hs));
   } catch {
     /* 容量不足等は無視 */
   }

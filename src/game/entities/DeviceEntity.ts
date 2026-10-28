@@ -1,10 +1,12 @@
 import type Matter from 'matter-js';
 import type { DeviceKind } from '../../data/devices';
+import type { FragmentGeometry } from '../../data/gameModes';
 
 export type EntityState = 'falling' | 'landing' | 'locked';
 
 /** 盤面上のデバイス（物理ボディ＋ゲーム属性）。価値は ScoreLedger が一元管理する */
 export interface DeviceEntity {
+  geometry?: FragmentGeometry;
   id: number;
   kind: DeviceKind;
   refurb: boolean;

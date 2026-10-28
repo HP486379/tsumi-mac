@@ -9,6 +9,8 @@ import {
   HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,
 } from '../config';
 import { BIG_SPEND_THRESHOLD, DEVICES, formatYen, type DeviceKind } from '../../data/devices';
+import { deviceCells,type GameMode,type FragmentGeometry } from '../../data/gameModes';
+import { planRealRowClear } from '../grid/realRowClear';
 import type { DeviceEntity } from '../entities/DeviceEntity';
 import { createDeviceBody, createPhysicsWorld, type PhysicsWorld } from '../physics/world';
 import { convexOverlap, polygonAABB, rectVertices, type Polygon } from '../physics/geometry';
@@ -37,6 +39,7 @@ export interface SimCallbacks {
 }
 
 export interface SimOptions {
+  mode?:GameMode;
   seed?: number;
   /** false の場合、最初のデバイスを自動出現させない（テスト用） */
   autoSpawn?: boolean;
@@ -51,6 +54,7 @@ const OVERLAP_TOL = 1.0;
 const ROW_CHECK_MAX_SPEED = 1.0;
 
 export class GameSim {
+  readonly mode:GameMode;
   readonly world: PhysicsWorld;
   readonly entities = new Map<number, DeviceEntity>();
   readonly ledger = new ScoreLedger();
@@ -80,6 +84,7 @@ export class GameSim {
   private readonly autoSpawn: boolean;
 
   constructor(private readonly cb: SimCallbacks = {}, opts: SimOptions = {}) {
+    this.mode=opts.mode??'classic';
     this.world = createPhysicsWorld();
     this.spawner = new Spawner(opts.seed ?? (Date.now() & 0x7fffffff));
     this.randomEvents = opts.randomEvents ?? true;
@@ -109,15 +114,16 @@ export class GameSim {
 
   spawnTicket(ticket: SpawnTicket): DeviceEntity | null {
     const spec = DEVICES[ticket.kind];
-    const col0 = Math.floor((COLS - spec.w) / 2);
-    const cx = (col0 + spec.w / 2) * CELL;
-    const cy = (spec.h * CELL) / 2;
-    const poly = rectVertices(cx, cy, spec.w * CELL, spec.h * CELL, 0);
+    const cells=deviceCells(ticket.kind,this.mode);
+    const col0 = Math.floor((COLS - cells.w) / 2);
+    const cx = (col0 + cells.w / 2) * CELL;
+    const cy = (cells.h * CELL) / 2;
+    const poly = rectVertices(cx, cy, cells.w * CELL, cells.h * CELL, 0);
     if (this.overlapsAny(poly, null)) {
       this.gameOver('spawn');
       return null;
     }
-    const e = this.addEntity(ticket.kind, ticket.refurb, cx, cy, spec.w, spec.h, 0, 'falling');
+    const e = this.addEntity(ticket.kind, ticket.refurb, cx, cy, cells.w, cells.h, 0, 'falling');
     this.ledger.registerPurchase(e.id, ticket.price);
     this.active = e;
     this.activeTicket = ticket;
@@ -139,12 +145,12 @@ export class GameSim {
 
   private addEntity(
     kind: DeviceKind, refurb: boolean, cx: number, cy: number, wCells: number, hCells: number, angle: number,
-    state: DeviceEntity['state'], fragment = false, cutTop = false, cutBottom = false,
+    state: DeviceEntity['state'], fragment = false, cutTop = false, cutBottom = false, geometry?:FragmentGeometry,
   ): DeviceEntity {
-    const body = createDeviceBody({ kind, cx, cy, wCells, hCells, angle });
+    const body = createDeviceBody({ kind, cx, cy, wCells, hCells, angle, mode:this.mode,geometry });
     Composite.add(this.world.engine.world, body);
     const e: DeviceEntity = {
-      id: this.nextId++, kind, refurb, wCells, hCells, body, state, fragment, cutTop, cutBottom, lastVx: 0, lastVy: 0,
+      id: this.nextId++, kind, refurb, wCells, hCells, body, state, fragment, cutTop, cutBottom, geometry, lastVx: 0, lastVy: 0,
     };
     this.entities.set(e.id, e);
     return e;
@@ -158,11 +164,11 @@ export class GameSim {
 
   /** テスト・デバッグ用：確定済みデバイスをグリッド位置に直接配置（散財にも計上） */
   placeLocked(kind: DeviceKind, col: number, row: number, quadrant = 0, refurb = false): DeviceEntity {
-    const spec = DEVICES[kind];
+    const spec = deviceCells(kind,this.mode);
     const W = quadrant % 2 === 1 ? spec.h : spec.w;
     const H = quadrant % 2 === 1 ? spec.w : spec.h;
     const e = this.addEntity(kind, refurb, (col + W / 2) * CELL, (row + H / 2) * CELL, spec.w, spec.h, quadrant * HALF_PI, 'locked');
-    this.ledger.registerPurchase(e.id, spec.price);
+    this.ledger.registerPurchase(e.id, DEVICES[kind].price);
     return e;
   }
 
@@ -174,7 +180,8 @@ export class GameSim {
       const b = e.body.bounds;
       if (b.max.x <= bb.minX + OVERLAP_TOL || b.min.x >= bb.maxX - OVERLAP_TOL) continue;
       if (b.max.y <= bb.minY + OVERLAP_TOL || b.min.y >= bb.maxY - OVERLAP_TOL) continue;
-      if (convexOverlap(poly, e.body.vertices, OVERLAP_TOL)) return true;
+      const shapes=this.mode==='real'&&e.body.parts.length>1?e.body.parts.slice(1):[e.body];
+      if (shapes.some(shape=>convexOverlap(poly, shape.vertices, OVERLAP_TOL))) return true;
     }
     return false;
   }
@@ -196,7 +203,8 @@ export class GameSim {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W } = this.worldDims(e, this.q);
-    const left = Math.round((this.targetX - (W * CELL) / 2) / CELL) * CELL + dir * CELL;
+    const candidate = Math.round((this.targetX - (W * CELL) / 2) / CELL) * CELL + dir * CELL;
+    const left = this.mode==='real'?Math.max(0,Math.min(FIELD_W-W*CELL,candidate)):candidate;
     if (left < -0.5 || left + W * CELL > FIELD_W + 0.5) return false;
     const nx = left + (W * CELL) / 2;
     const poly = rectVertices(nx, e.body.position.y, e.wCells * CELL, e.hCells * CELL, this.q * HALF_PI);
@@ -212,13 +220,13 @@ export class GameSim {
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const nq = (this.q + dir + 4) % 4;
     const { W } = this.worldDims(e, nq);
-    const baseLeft = Math.round((e.body.position.x - (W * CELL) / 2) / CELL) * CELL;
+    const baseLeft = this.mode==='real'?e.body.position.x-(W*CELL)/2:Math.round((e.body.position.x - (W * CELL) / 2) / CELL) * CELL;
     const y = e.body.position.y;
     for (const dy of [0, -CELL / 2, -CELL]) {
       for (const kick of [0, -1, 1, -2, 2]) {
         const left = baseLeft + kick * CELL;
-        if (left < -0.5 || left + W * CELL > FIELD_W + 0.5) continue;
-        const nx = left + (W * CELL) / 2;
+        if (this.mode==='classic' && (left < -0.5 || left + W * CELL > FIELD_W + 0.5)) continue;
+        const nx = this.mode==='real'?Math.max(W*CELL/2,Math.min(FIELD_W-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
         const poly = rectVertices(nx, y + dy, e.wCells * CELL, e.hCells * CELL, nq * HALF_PI);
         if (this.overlapsAny(poly, e)) continue;
         this.q = nq;
@@ -295,7 +303,8 @@ export class GameSim {
       this.input.queue.length = 0;
     }
 
-    Engine.update(this.world.engine, STEP_MS);
+    if(this.mode==='real')for(let sub=0;sub<4;sub++)Engine.update(this.world.engine,STEP_MS/4);
+    else Engine.update(this.world.engine, STEP_MS);
 
     // 接地判定
     if (a && a.state === 'falling' && this.active === a) {
@@ -369,27 +378,28 @@ export class GameSim {
     const polys: Polygon[] = [];
     for (const e of this.entities.values()) {
       if (e.state !== 'locked' || e.body.speed > ROW_CHECK_MAX_SPEED) continue;
-      polys.push(e.body.vertices);
+      if(this.mode==='real'&&e.body.parts.length>1)polys.push(...e.body.parts.slice(1).map(p=>p.vertices));
+      else polys.push(e.body.vertices);
     }
     return computeOccupancy(polys);
   }
 
   /** 揃った行を検出して整理する。消去した行数を返す */
-  checkRows(): number {
+  checkRows(forcedRows?:number[]): number {
     if (this.status !== 'running') return 0;
-    const rows = findFullRows(this.occupancy());
+    const rows = forcedRows??findFullRows(this.occupancy());
     if (rows.length === 0) return 0;
 
-    const pieces: PieceState[] = [];
+    const pieces: (PieceState & {geometry?:FragmentGeometry;vertices?:Polygon;polygons?:Polygon[]})[] = [];
     for (const e of this.entities.values()) {
       if (e.state !== 'locked') continue;
       const b = e.body;
       pieces.push({
         id: e.id, kind: e.kind, refurb: e.refurb, cx: b.position.x, cy: b.position.y, angle: b.angle,
-        wCells: e.wCells, hCells: e.hCells, value: this.ledger.valueOf(e.id), vx: b.velocity.x, vy: b.velocity.y,
+        geometry:e.geometry,vertices:this.mode==='real'?b.vertices:undefined,polygons:this.mode==='real'&&b.parts.length>1?b.parts.slice(1).map(p=>p.vertices):undefined, wCells: e.wCells, hCells: e.hCells, value: this.ledger.valueOf(e.id), vx: b.velocity.x, vy: b.velocity.y,
       });
     }
-    const plan = planRowClear(pieces, rows);
+    const plan = this.mode==='real'?planRealRowClear(pieces, rows):planRowClear(pieces, rows);
     let clearedYen = 0;
     for (const id of plan.removeIds) {
       const src = this.entities.get(id);
@@ -398,7 +408,7 @@ export class GameSim {
       const frags: Array<{ id: number; value: number }> = [];
       for (const f of plan.create) {
         if (f.sourceId !== id) continue;
-        const ne = this.addEntity(f.kind, f.refurb, f.cx, f.cy, f.wCells, f.hCells, f.angle, 'locked', true, f.cutTop, f.cutBottom);
+        const ne = this.addEntity(f.kind, f.refurb, f.cx, f.cy, f.wCells, f.hCells, f.angle, 'locked', true, f.cutTop, f.cutBottom,'geometry' in f?f.geometry as FragmentGeometry:undefined);
         Body.setVelocity(ne.body, { x: f.vx, y: f.vy });
         frags.push({ id: ne.id, value: f.value });
       }
@@ -468,7 +478,7 @@ export class GameSim {
         x: e.body.position.x,
         y: e.body.position.y,
         angle: e.body.angle,
-        key: { kind: e.kind, wCells: e.wCells, hCells: e.hCells, refurb: e.refurb, cutTop: e.cutTop, cutBottom: e.cutBottom },
+        key: { ...(this.mode==='real'?{mode:this.mode,geometry:e.geometry}:{}), kind: e.kind, wCells: e.wCells, hCells: e.hCells, refurb: e.refurb, cutTop: e.cutTop, cutBottom: e.cutBottom },
         active: e === this.active,
       });
     }

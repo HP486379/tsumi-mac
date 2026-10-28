@@ -7,6 +7,8 @@ import { AudioManager } from '../game/systems/audio';
 import { loadHighScore, loadSettings, saveSettings, submitResult, type HighScore, type Settings } from '../game/systems/highscore';
 import type { ScoreSnapshot } from '../game/systems/scoring';
 
+import type { GameMode } from '../data/gameModes';
+
 type Screen = 'title' | 'howto' | 'game' | 'result';
 
 function seedFromUrl(): number | undefined {
@@ -19,6 +21,7 @@ function seedFromUrl(): number | undefined {
 }
 
 export function App() {
+  const [mode,setMode]=useState<GameMode>('classic');
   const [screen, setScreen] = useState<Screen>('title');
   const [settings, setSettingsState] = useState<Settings>(() => loadSettings());
   const [highScore, setHighScore] = useState<HighScore>(() => loadHighScore());
@@ -34,21 +37,23 @@ export function App() {
     audio.setBgm(s.bgm);
   }, [audio]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((nextMode:GameMode=mode) => {
+    setMode(nextMode);setHighScore(loadHighScore(undefined,nextMode));
     audio.unlock();
     setResult(null);
     setGameKey((k) => k + 1);
     setScreen('game');
-  }, [audio]);
+  }, [audio,mode]);
 
   const onGameOver = useCallback((score: ScoreSnapshot) => {
-    const { hs, newRecord } = submitResult(score);
+    const { hs, newRecord } = submitResult(score,undefined,mode);
     setHighScore(hs);
     setResult({ score, newRecord });
     setScreen('result');
-  }, []);
+  }, [mode]);
 
   const toTitle = useCallback(() => {
+    setMode('classic');setHighScore(loadHighScore());
     audio.stopBgm();
     setScreen('title');
   }, [audio]);
@@ -56,14 +61,14 @@ export function App() {
   return (
     <div className="app" data-screen={screen}>
       {screen === 'title' && (
-        <TitleScreen highScore={highScore} settings={settings} onSettings={setSettings} onStart={startGame} onHowTo={() => setScreen('howto')} />
+        <TitleScreen highScore={highScore} settings={settings} onSettings={setSettings} onStart={()=>startGame('classic')} onRealStart={()=>startGame('real')} onHowTo={() => setScreen('howto')} />
       )}
       {screen === 'howto' && <HowToScreen onBack={() => setScreen('title')} />}
       {screen === 'game' && (
-        <GameScreen key={gameKey} audio={audio} settings={settings} onSettings={setSettings} onGameOver={onGameOver} onTitle={toTitle} seed={seed} />
+        <GameScreen mode={mode} key={gameKey} audio={audio} settings={settings} onSettings={setSettings} onGameOver={onGameOver} onTitle={toTitle} seed={seed} />
       )}
       {screen === 'result' && result && (
-        <GameOverScreen score={result.score} highScore={highScore} newRecord={result.newRecord} onRetry={startGame} onTitle={toTitle} />
+        <GameOverScreen mode={mode} score={result.score} highScore={highScore} newRecord={result.newRecord} onRetry={()=>startGame(mode)} onTitle={toTitle} />
       )}
     </div>
   );

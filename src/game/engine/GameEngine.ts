@@ -5,6 +5,7 @@
  */
 import { HUD_INTERVAL_MS } from '../config';
 import type { DeviceKind } from '../../data/devices';
+import type { GameMode } from '../../data/gameModes';
 import { GameSim, type GameMessage, type GameOverReason } from './GameSim';
 import { FixedStepper } from './loop';
 import { Renderer, type RenderState } from '../rendering/renderer';
@@ -30,6 +31,7 @@ export interface EngineCallbacks {
 }
 
 export interface EngineDebugApi {
+  clearRows:(rows:number[])=>number;
   views: () => { front: RenderState | null; oblique: RenderState | null; obliqueFrames: number; synchronized: boolean };
   state: () => {
     status: string; paused: boolean; entities: number; active: string | null; activeState: string | null;
@@ -65,6 +67,7 @@ export class GameEngine {
     private readonly cb: EngineCallbacks,
     readonly audio: AudioManager,
     private readonly seed?: number,
+    private readonly mode:GameMode='classic',
   ) {
     this.renderer = new Renderer(canvas);
     this.views = new FrameViews(this.renderer);
@@ -88,7 +91,7 @@ export class GameEngine {
           this.cb.onGameOver(this.sim.score(), reason);
         },
       },
-      { seed: this.seed },
+      { seed: this.seed,mode:this.mode },
     );
   }
 
@@ -227,6 +230,7 @@ export class GameEngine {
   // ------------------------------------------------------------------ デバッグ・検証用
   debugApi(): EngineDebugApi {
     return {
+      clearRows:rows=>this.sim.checkRows(rows.filter(r=>Number.isInteger(r)&&r>=0&&r<18)),
       views: () => ({ front: this.views.lastState, oblique: this.oblique?.lastState ?? null,
         obliqueFrames: this.oblique?.frames ?? 0, synchronized: !!this.oblique && this.oblique.lastState === this.views.lastState }),
       state: () => {

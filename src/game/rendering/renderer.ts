@@ -128,13 +128,14 @@ export class Renderer {
 
     // デバイス
     for (const it of st.items) {
-      const sp = this.sprites.get(it.key);
+      const sp = this.sprites.get(it.key.geometry?{...it.key,geometry:undefined,wCells:it.key.geometry.source.w/CELL,hCells:it.key.geometry.source.h/CELL,cutTop:false,cutBottom:false}:it.key);
       const w = it.key.wCells * CELL;
       const h = it.key.hCells * CELL;
       ctx.save();
       ctx.translate(it.x, it.y);
       if (it.angle !== 0) ctx.rotate(it.angle);
-      ctx.drawImage(sp, -w / 2, -h / 2, w, h);
+      if(it.key.geometry){const g=it.key.geometry;ctx.beginPath();g.outline.forEach((v,i)=>i?ctx.lineTo(v.x,v.y):ctx.moveTo(v.x,v.y));ctx.closePath();ctx.clip();ctx.drawImage(sp,-g.source.w/2-g.source.offsetX,-g.source.h/2-g.source.offsetY,g.source.w,g.source.h);}
+      else ctx.drawImage(sp, -w / 2, -h / 2, w, h);
       if (it.active) {
         ctx.strokeStyle = 'rgba(127,211,255,0.9)';
         ctx.lineWidth = 1.5;

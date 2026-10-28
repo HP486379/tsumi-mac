@@ -2,17 +2,18 @@ import { useEffect, useRef } from 'react';
 import { DEVICES, formatYen } from '../data/devices';
 import type { HudState } from '../game/engine/GameEngine';
 import { drawPreview } from '../game/rendering/renderer';
+import { deviceCells,type GameMode } from '../data/gameModes';
 
-export function Hud({ hud, onPause }: { hud: HudState | null; onPause: () => void }) {
+export function Hud({ hud, onPause,mode='classic' }: { hud: HudState | null; onPause: () => void;mode?:GameMode }) {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const nextKind = hud?.next.kind;
   const nextRefurb = hud?.next.refurb ?? false;
   useEffect(() => {
     const c = previewRef.current;
     if (!c || !nextKind) return;
-    const d = DEVICES[nextKind];
-    drawPreview(c, { kind: nextKind, wCells: d.w, hCells: d.h, refurb: nextRefurb, cutTop: false, cutBottom: false }, window.devicePixelRatio || 1);
-  }, [nextKind, nextRefurb]);
+    const d = deviceCells(nextKind,mode);
+    drawPreview(c, { ...(mode==='real'?{mode}:{}),kind: nextKind, wCells: d.w, hCells: d.h, refurb: nextRefurb, cutTop: false, cutBottom: false }, window.devicePixelRatio || 1);
+  }, [nextKind, nextRefurb,mode]);
 
   const s = hud?.score;
   return (
@@ -26,7 +27,7 @@ export function Hud({ hud, onPause }: { hud: HudState | null; onPause: () => voi
         <span className="hud-value" data-testid="hud-index">{formatYen(s?.fieldValue ?? 0)}</span>
       </div>
       <div className="hud-item small lv">
-        <span className="hud-label">レベル</span>
+        <span className="hud-label">{mode==='real'?<span data-testid="game-mode">実寸モード / レベル</span>:'レベル'}</span>
         <span className="hud-value" data-testid="hud-level">{s?.level ?? 1}</span>
       </div>
       <div className="hud-item small lines">

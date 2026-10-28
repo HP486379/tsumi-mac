@@ -3,8 +3,10 @@ import { formatYen } from '../data/devices';
 import type { ScoreSnapshot } from '../game/systems/scoring';
 import type { HighScore } from '../game/systems/highscore';
 import { buildShareText, formatTime, shareText } from '../app/share';
+import type { GameMode } from '../data/gameModes';
 
 interface Props {
+  mode?:GameMode;
   score: ScoreSnapshot;
   highScore: HighScore;
   newRecord: boolean;
@@ -12,11 +14,11 @@ interface Props {
   onTitle: () => void;
 }
 
-export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle }: Props) {
+export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle,mode='classic' }: Props) {
   const [shareMsg, setShareMsg] = useState('');
   const onShare = async () => {
     const url = typeof location !== 'undefined' && location.protocol.startsWith('http') ? location.href.split('#')[0] : undefined;
-    const r = await shareText(buildShareText(score, url));
+    const r = await shareText((mode==='real'?'【実寸モード】\n':'')+buildShareText(score, url));
     setShareMsg(
       r === 'shared' ? '共有しました' : r === 'copied' ? '結果をクリップボードにコピーしました' : r === 'cancelled' ? '共有をキャンセルしました' : 'コピーできませんでした',
     );
@@ -24,6 +26,7 @@ export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle }
   return (
     <main className="screen result-screen" data-testid="result-screen">
       <h2 className="collapse-title">積みMac崩壊</h2>
+      {mode==='real'&&<p data-testid="result-mode">実寸モードの記録</p>}
       {newRecord && <p className="new-record" data-testid="new-record">最高散財額を更新！</p>}
       <dl className="result-table">
         <div className="hl"><dt>散財総額</dt><dd data-testid="result-spent">{formatYen(score.spent)}</dd></div>

@@ -5,10 +5,13 @@ import { DEVICES } from '../../data/devices';
 import { OFFICIAL_DIMENSIONS } from '../../data/officialDimensions';
 import { CELL } from '../config';
 import type { RenderItem } from './renderer';
+import { realSize,REAL_PX_PER_MM } from '../../data/gameModes';
+import { clipMesh } from './clipMesh';
 
 export type V3 = [number, number, number];
-export interface MeshVertex { p: V3; n: V3 }
+export interface MeshVertex { p: V3; n: V3; part?:number }
 export function modelDimensions(item: RenderItem) {
+  if(item.key.mode==='real')return {w:item.key.wCells*CELL,h:item.key.hCells*CELL,depth:realSize(item.key.kind).depth,scale:REAL_PX_PER_MM*10};
   const d = OFFICIAL_DIMENSIONS[item.key.kind], spec = DEVICES[item.key.kind];
   const scale = Math.min(spec.w * CELL / d.widthCm, spec.h * CELL / d.heightCm);
   return { w: d.widthCm * scale * item.key.wCells / spec.w,
@@ -18,14 +21,16 @@ export function modelDimensions(item: RenderItem) {
 /** Rounded X/Z footprint swept vertically, with shared quarter-circle bevel rings.
  * Normals are analytic: adjacent top/front/side surfaces share the same vertices. */
 export function chassisMesh(item: RenderItem): MeshVertex[] {
+  if(item.key.geometry){const g=item.key.geometry;return clipMesh(chassisMesh({...item,key:{...item.key,wCells:g.source.w/CELL,hCells:g.source.h/CELL,geometry:undefined,cutTop:false,cutBottom:false}}),g);}
   const { w, h, depth } = modelDimensions(item), cylinder = item.key.kind === 'macPro2013';
-  const radius = cylinder ? w / 2 : Math.min(w, depth) * (item.key.kind === 'pro' ? 0.075 : 0.19);
-  const bevel = Math.min(h * 0.15, w * 0.024);
+  const realMini=item.key.mode==='real'&&item.key.kind.startsWith('mini');
+  const radius = cylinder ? w / 2 : realMini?w*(item.key.kind==='miniM4'?27/127:30/197):Math.min(w, depth) * (item.key.kind === 'pro' ? 0.075 : 0.19);
+  const bevel = realMini?Math.min(h*.15,(item.key.kind==='miniM4'?2.4:1.2)*REAL_PX_PER_MM):Math.min(h * 0.15, w * 0.024);
   const tower = item.key.kind === 'pro';
   const topTrim = tower && !item.key.cutTop ? Math.min(7, h*.15) : 0;
   const bottomTrim = tower && !item.key.cutBottom ? Math.min(3, h*.1) : 0;
   const rings: MeshVertex[][] = [];
-  const levels = [0, Math.PI / 6, Math.PI / 3, Math.PI / 2];
+  const levels = realMini?Array.from({length:7},(_,i)=>i*Math.PI/12):[0, Math.PI / 6, Math.PI / 3, Math.PI / 2];
   for (const bottom of [false, true]) for (const angle of bottom ? [...levels].reverse() : levels) {
     const cut = bottom ? item.key.cutBottom : item.key.cutTop;
     const inset = cut ? 0 : bevel * (1 - Math.sin(angle));
@@ -52,7 +57,9 @@ export function chassisMesh(item: RenderItem): MeshVertex[] {
     for (let i=0;i<count;i++) mesh.push(center,{p:ring[i]!.p,n:normal},{p:ring[(i+1)%count]!.p,n:normal});
   }
   // Polished tubular rails and feet belong to the same depth-tested solid.
+  let component=0;
   const tube = (a: V3, b: V3, radius: number) => {
+    const begin=mesh.length,part=++component;
     const axis=b.map((v,i)=>v-a[i]!) as V3, len=Math.hypot(...axis);
     const n=axis.map(v=>v/len) as V3;
     const u:V3=Math.abs(n[1])>.9?[1,0,0]:[0,1,0];
@@ -66,6 +73,7 @@ export function chassisMesh(item: RenderItem): MeshVertex[] {
         mesh.push({p,n:normal},{p:at(p,t).p,n:normal},{p:at(p,next).p,n:normal});
       }
     }
+    for(let i=begin;i<mesh.length;i++)mesh[i]!.part=part;
   };
   if(tower) for(const x of [-w*.39,w*.39]) {
     if(!item.key.cutTop) {

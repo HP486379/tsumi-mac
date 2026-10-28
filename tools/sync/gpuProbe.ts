@@ -3,11 +3,12 @@ import { chassisPose, projectLocal } from '../../src/game/rendering/chassisProje
 import { modelDimensions, type V3 } from '../../src/game/rendering/chassisMesh';
 import { ANGLES, makeItem } from './audit';
 import { DEVICE_KINDS, type DeviceKind } from '../../src/data/devices';
+import { deviceCells,type GameMode } from '../../src/data/gameModes';
 
 /** Read actual GPU vertex output, not pixel centers or a second JS projection.
  * Only syntax is upgraded to GLSL 300 for transform feedback; the production
  * rotation, scaling, pose and screen expressions are left verbatim. */
-export function gpuProbe() {
+export function gpuProbe(mode:GameMode='classic') {
   const gl=document.createElement('canvas').getContext('webgl2');
   if(!gl)throw Error('WebGL2 transform feedback unavailable');
   const source='#version 300 es\n'+CHASSIS_VERTEX_SHADER.replace(/attribute /g,'in ').replace(/varying /g,'out ').replace('void main()', 'out vec3 probe;\nvoid main()').replace('  gl_Position=', '  probe=vec3(screen,position.z);\n  gl_Position=');
@@ -22,7 +23,9 @@ export function gpuProbe() {
   const loc=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(loc);
   const rows:{kind:DeviceKind;angle:number;local:V3;expected:ReturnType<typeof projectLocal>;actual:{x:number;y:number;z:number};error:number}[]=[];
   for(const kind of DEVICE_KINDS)for(const angle of ANGLES) {
-    const item=makeItem(kind,173.125,392.875,angle),dim=modelDimensions(item),pose=chassisPose(item);
+    const item=makeItem(kind,173.125,392.875,angle);
+    if(mode==='real'){const d=deviceCells(kind,mode);item.key={...item.key,mode,wCells:d.w,hCells:d.h};}
+    const dim=modelDimensions(item),pose=chassisPose(item);
     const points:V3[]=[[0,0,0],[-dim.w/2,-dim.h/2,0],[dim.w/2,dim.h/2,0],[dim.w/2,-dim.h/2,dim.depth],[0,0,dim.depth/2]];
     gl.bindBuffer(gl.ARRAY_BUFFER,input);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(points.flat()),gl.STATIC_DRAW);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
     gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER,output);gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER,points.length*12,gl.STREAM_READ);

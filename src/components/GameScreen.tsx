@@ -9,6 +9,7 @@ import { useStageSize } from '../hooks/useStageSize';
 import { Hud } from './Hud';
 import { TouchControls } from './TouchControls';
 import { PauseOverlay } from './PauseOverlay';
+import type { GameMode } from '../data/gameModes';
 
 declare global {
   interface Window {
@@ -17,6 +18,7 @@ declare global {
 }
 
 interface Props {
+  mode?:GameMode;
   audio: AudioManager;
   settings: Settings;
   onSettings: (s: Settings) => void;
@@ -27,7 +29,7 @@ interface Props {
 
 interface Toast { id: number; title: string; detail?: string; kind: GameMessage['kind'] }
 
-export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, seed }: Props) {
+export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, seed,mode='classic' }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const obliqueRef = useRef<HTMLCanvasElement>(null);
@@ -68,6 +70,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
       },
       audio,
       seed,
+      mode,
     );
     engineRef.current = engine;
     window.__tsumimac = engine.debugApi();
@@ -96,7 +99,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
       engineRef.current = null;
       if (window.__tsumimac) delete window.__tsumimac;
     };
-  }, [audio, pushToast, seed]);
+  }, [audio, pushToast, seed,mode]);
 
   useEffect(() => {
     engineRef.current?.resize(size.width, size.height, size.dpr);
@@ -134,8 +137,8 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
   const release = useCallback((a: Action) => engineRef.current?.release(a), []);
 
   return (
-    <main className="game-screen" data-testid="game-screen">
-      <Hud hud={hud} onPause={() => engineRef.current?.pause()} />
+    <main className="game-screen" data-testid="game-screen" data-mode={mode}>
+      <Hud hud={hud} mode={mode} onPause={() => engineRef.current?.pause()} />
       <div className="stage" ref={stageRef}>
         <div className="canvas-wrap" style={{ width: size.width, height: size.height }}>
           <canvas

@@ -15,8 +15,8 @@ export class SoftwareChassis {
     const frame=this.ctx.createImageData(w,h),zBuffer=new Float32Array(w*h).fill(Infinity);
     for(const item of items) {
       const key=JSON.stringify(item.key);let mesh=this.cache.get(key);
-      if(!mesh) {mesh=chassisMesh(item);this.cache.set(key,mesh);}
-      const dim=modelDimensions(item),pose=chassisPose(item),c=Math.cos(item.angle),s=Math.sin(item.angle);
+      if(!mesh) {mesh=chassisMesh(item);this.cache.set(key,mesh);if(this.cache.size>256)this.cache.delete(this.cache.keys().next().value!);}
+      const d=modelDimensions(item),source=item.key.geometry?.source,dim={...d,w:source?.w??d.w,h:source?.h??d.h},pose=chassisPose(item),c=Math.cos(item.angle),s=Math.sin(item.angle);
       const vertices=mesh.map(v=>{
         const world=worldFromLocal(pose,v.p),screen=projectWorld(...world);
         return {x:screen.x*scale,y:screen.y*scale,p:v.p,n:v.n};
@@ -33,11 +33,13 @@ export class SoftwareChassis {
           const z=u*a.p[2]+v*b.p[2]+t*d.p[2],idx=y*w+x;if(z>=zBuffer[idx]!)continue;
           zBuffer[idx]=z;
           const p=a.p.map((n,j)=>u*n+v*b.p[j]!+t*d.p[j]!) as V3;
+          p[0]+=source?.offsetX??0;p[1]+=source?.offsetY??0;
           const nn=a.n.map((n,j)=>u*n+v*b.n[j]!+t*d.n[j]!) as V3,len=Math.hypot(...nn)||1;
           const n=nn.map(n=>n/len) as V3,scaled:V3=[n[0]/pose.sx,n[1]/pose.sy,n[2]],normalLength=Math.hypot(...scaled);
           const world:V3=[(c*scaled[0]-s*scaled[1])/normalLength,(s*scaled[0]+c*scaled[1])/normalLength,scaled[2]/normalLength];
           const dot=Math.max(0,(-.35*world[0]-.8*world[1]-.6*world[2])/1.059),light=.68+.38*dot;
           let color=[.70*light,.73*light,.77*light];
+          if(item.key.mode==='real')color=[.76*light,.78*light,.81*light];
           if(item.key.kind==='macPro2013') {
             const shine=Math.pow(Math.max(0,(-.25*world[0]-.2*world[1]-world[2])/1.05),10);
             color=[.035+.26*shine,.043+.29*shine,.055+.33*shine];
@@ -47,7 +49,11 @@ export class SoftwareChassis {
           } else {
             if(n[2]<-.93 && item.key.kind!=='pro') {
               const py=p[1]/dim.h,x=p[0]/dim.w;
-              if((item.key.kind==='studio'||item.key.kind==='miniM4')&&py>.13&&py<.27) {
+              if(item.key.mode==='real'&&item.key.kind==='miniM4'){
+                const y=p[1]/dim.w-dim.h/dim.w*.13;
+                const port=(cx:number)=>{const qx=Math.abs(x-cx)-3.2/127,qy=Math.abs(y)-.8/127;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-.65/127;};
+                if(Math.min(port(-20/127),port(-1/127),Math.hypot(x-24/127,y)-1.75/127)<0)color=[.045,.052,.06];
+              }else if((item.key.kind==='studio'||item.key.kind==='miniM4')&&py>.13&&py<.27) {
                 if((x>-.33&&x<-.28)||(x>-.21&&x<-.16)||(dim.w>50&&x>-.03&&x<.17&&py>.17&&py<.21))color=[.09,.11,.13];
               }
               if(Math.abs(p[0]-dim.w*.35)<1&&Math.abs(p[1]-dim.h*.12)<.75)color=[.87,.98,.9];

@@ -7,10 +7,11 @@ interface Props {
   settings: Settings;
   onSettings: (s: Settings) => void;
   onStart: () => void;
+  onRealStart:()=>void;
   onHowTo: () => void;
 }
 
-export function TitleScreen({ highScore, settings, onSettings, onStart, onHowTo }: Props) {
+export function TitleScreen({ highScore, settings, onSettings, onStart, onRealStart,onHowTo }: Props) {
   return (
     <main className="screen title-screen" data-testid="title-screen">
       <div className="title-stack" aria-hidden="true">
@@ -28,6 +29,8 @@ export function TitleScreen({ highScore, settings, onSettings, onStart, onHowTo 
         <button type="button" className="btn primary big" data-testid="start-button" onClick={onStart}>
           積みはじめる
         </button>
+        <button type="button" className="btn" data-testid="real-start-button" onClick={onRealStart}>実寸モードで積む</button>
+        <small className="mode-description">実機の寸法比で積む新モード。記録は通常モードと別に保存。</small>
         <button type="button" className="btn" data-testid="howto-button" onClick={onHowTo}>
           遊び方
         </button>
@@ -39,7 +42,7 @@ export function TitleScreen({ highScore, settings, onSettings, onStart, onHowTo 
         <div><dt>プレイ回数</dt><dd>{highScore.plays}回</dd></div>
       </dl>
       <p className="disclaimer">
-        本作は非公式のファンメイド・パロディゲームです。登場デバイスのサイズ・質量・価格はゲーム用の架空パラメータで、実製品の仕様・価格とは関係ありません。
+        本作は非公式のファンメイド・パロディゲームです。通常モードのサイズと、両モードの質量・価格はゲーム用パラメータです。実寸モードは実機の寸法比を反映します。
         Mac、Mac mini、Mac Studio、Mac Pro は Apple Inc. の商標です。
       </p>
     </main>
