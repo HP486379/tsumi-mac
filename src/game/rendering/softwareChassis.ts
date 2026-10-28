@@ -50,20 +50,22 @@ export class SoftwareChassis {
           } else {
             if(n[2]<-.93 && item.key.kind!=='pro') {
               const py=p[1]/dim.h,x=p[0]/dim.w;
-              if(item.key.mode==='real'&&item.key.kind==='miniM4'){
-                const y=p[1]/dim.w-dim.h/dim.w*.13;
+              if(item.key.kind==='miniM4'){
+                const y=(p[1]/dim.w-dim.h/dim.w*.13)*(item.key.mode==='real'?1:2.54);
                 const port=(cx:number)=>{const qx=Math.abs(x-cx)-3.2/127,qy=Math.abs(y)-.8/127;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-.65/127;};
                 if(Math.min(port(-20/127),port(-1/127),Math.hypot(x-24/127,y)-1.75/127)<0)color=[.045,.052,.06];
-              }else if((item.key.kind==='studio'||item.key.kind==='miniM4')&&py>.13&&py<.27) {
+              }else if(item.key.kind==='studio'&&py>.13&&py<.27) {
                 if((x>-.33&&x<-.28)||(x>-.21&&x<-.16)||(dim.w>50&&x>-.03&&x<.17&&py>.17&&py<.21))color=[.09,.11,.13];
               }
-              if(Math.abs(p[0]-dim.w*.35)<1&&Math.abs(p[1]-dim.h*.12)<.75)color=[.87,.98,.9];
+              if(item.key.kind==='miniM4'&&item.key.mode!=='real'){
+                if(Math.hypot(p[0]-dim.w*.35,(p[1]-dim.h*.12)*2.54)<.6)color=[.87,.98,.9];
+              }else if(Math.abs(p[0]-dim.w*.35)<1&&Math.abs(p[1]-dim.h*.12)<.75)color=[.87,.98,.9];
             }
             if(item.key.kind==='pro' && n[2]<-.93 && Math.abs(p[0])<dim.w*.4 && Math.abs(p[1])<dim.h*.4) {
               const yy=p[1]/3.4,xx=p[0]/3.4+((Math.floor(yy)%2+2)%2)*.5;
               if(Math.hypot(xx-Math.floor(xx)-.5,yy-Math.floor(yy)-.5)<.3) color=[.15,.18,.21];
             }
-            if(!item.key.cutBottom && p[1]>dim.h/2-1.3)color=color.map(n=>n*.48);
+            if(!item.key.cutBottom && p[1]>dim.h/2-(item.key.kind==='miniM4'&&item.key.mode!=='real'?.8/2.54:1.3))color=color.map(n=>n*.48);
             if((item.key.cutTop&&n[1]<-.8)||(item.key.cutBottom&&n[1]>.8))color=[.34,.37,.41];
             if(item.key.refurb&&n[2]<-.93&&p[0]>dim.w*.17&&p[1]<-dim.h*.15)color=[.1,.55,.34];
           }

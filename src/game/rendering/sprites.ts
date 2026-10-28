@@ -35,8 +35,9 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
   const spec = DEVICES[key.kind];
   const w = key.wCells * CELL;
   const h = key.hCells * CELL;
-  const pad = 1.2;
-  const r = key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
+  const classicM4=key.kind==='miniM4'; // Real mode returned above.
+  const pad = classicM4?.7:1.2;
+  const r = classicM4?1.5:key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
 
   if (key.kind === 'macPro2013') {
     // 黒い円筒：正面は円筒を真横から見たシルエット＋曲面の光沢（アルミ本体・上面ハイライトは描かない）
@@ -55,7 +56,7 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
 
     // 上面ハイライト
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
+    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, classicM4?.9:Math.min(5, h * 0.12), 3);
     ctx.fill();
   }
 
@@ -73,19 +74,13 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
       break;
     }
     case 'miniM4': {
-      // 小型キューブ：前面ポート2つ
+      // Keep the classic cell size; horizontal USB-C openings and headphone
+      // jack use the same normalized locations as the solid renderer.
       ctx.fillStyle = 'rgba(30,34,40,0.6)';
-      for (let i = 0; i < Math.max(1, key.wCells); i++) {
-        const bx = i * CELL;
-        roundRect(ctx, bx + 9, h * 0.52, 5, 8, 2);
-        ctx.fill();
-        roundRect(ctx, bx + 17, h * 0.52, 5, 8, 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = spec.accent;
-      ctx.beginPath();
-      ctx.arc(w - 8, h * 0.3, 2, 0, Math.PI * 2);
-      ctx.fill();
+      for(const x of [-20/127,-1/127]){roundRect(ctx,w*(.5+x-3.85/127),h*.63-w*1.45/127,w*7.7/127,w*2.9/127,w*.65/127);ctx.fill();}
+      ctx.beginPath();ctx.arc(w*(.5+24/127),h*.63,w*1.75/127,0,Math.PI*2);ctx.fill();
+      ctx.fillRect(w*.12,h-1.5,w*.76,.8);
+      ctx.fillStyle='#def5e4';ctx.beginPath();ctx.arc(w*.85,h*.62,.6,0,Math.PI*2);ctx.fill();
       break;
     }
     case 'studio': {
