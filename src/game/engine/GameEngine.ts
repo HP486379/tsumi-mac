@@ -5,6 +5,7 @@
  */
 import { HUD_INTERVAL_MS } from '../config';
 import type { DeviceKind } from '../../data/devices';
+import { boardForMode,type BoardSpec } from '../board';
 import type { GameMode } from '../../data/gameModes';
 import { GameSim, type GameMessage, type GameOverReason } from './GameSim';
 import { FixedStepper } from './loop';
@@ -34,7 +35,7 @@ export interface EngineDebugApi {
   clearRows:(rows:number[])=>number;
   views: () => { front: RenderState | null; oblique: RenderState | null; obliqueFrames: number; synchronized: boolean };
   state: () => {
-    status: string; paused: boolean; entities: number; active: string | null; activeState: string | null;
+    board:Readonly<BoardSpec>; status: string; paused: boolean; entities: number; active: string | null; activeState: string | null;
     q: number; score: ScoreSnapshot; danger: number; fps: number; steps: number; escaped: number;
     activeX: number | null; activeY: number | null; frames: number; audioPlayed: number; bgmPlaying: boolean;
   };
@@ -69,7 +70,7 @@ export class GameEngine {
     private readonly seed?: number,
     private readonly mode:GameMode='classic',
   ) {
-    this.renderer = new Renderer(canvas);
+    this.renderer = new Renderer(canvas,boardForMode(mode));
     this.views = new FrameViews(this.renderer);
     this.sim = this.createSim();
     this.onVisibility = this.onVisibility.bind(this);
@@ -217,7 +218,7 @@ export class GameEngine {
 
   /** Optional rendering sink only; never starts a loop or another GameSim. */
   setObliqueView(canvas: HTMLCanvasElement | null, width = 400, height = 704, dpr = 1): void {
-    this.oblique = canvas ? new ObliqueRenderer(canvas, this.renderer.sprites) : null;
+    this.oblique = canvas ? new ObliqueRenderer(canvas, this.renderer.sprites,this.sim.board) : null;
     this.oblique?.resize(width, height, dpr);
     this.views.attach(this.oblique);
   }
@@ -230,13 +231,13 @@ export class GameEngine {
   // ------------------------------------------------------------------ デバッグ・検証用
   debugApi(): EngineDebugApi {
     return {
-      clearRows:rows=>this.sim.checkRows(rows.filter(r=>Number.isInteger(r)&&r>=0&&r<18)),
+      clearRows:rows=>this.sim.checkRows(rows.filter(r=>Number.isInteger(r)&&r>=0&&r<this.sim.board.rows)),
       views: () => ({ front: this.views.lastState, oblique: this.oblique?.lastState ?? null,
         obliqueFrames: this.oblique?.frames ?? 0, synchronized: !!this.oblique && this.oblique.lastState === this.views.lastState }),
       state: () => {
         const a = this.sim.active;
         return {
-          status: this.sim.status,
+          board:this.sim.board, status: this.sim.status,
           paused: this.paused,
           entities: this.sim.entities.size,
           active: a ? a.kind : null,

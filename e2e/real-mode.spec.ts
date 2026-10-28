@@ -8,7 +8,7 @@ test('real mode is playable, synchronized, survives clearing/restart, and preser
   await page.goto('/?seed=20261028');await page.getByTestId('real-start-button').click();
   await expect(page.getByTestId('game-screen')).toHaveAttribute('data-mode','real');
   await expect.poll(()=>page.evaluate(()=>window.__tsumimac!.views().synchronized)).toBe(true);
-  await expect(page.getByTestId('game-mode')).toContainText('実寸モード');
+  await expect(page.getByTestId('game-mode')).toContainText('実寸540×900');
   await page.keyboard.press('KeyP');
   await page.evaluate(()=>{
     const d=window.__tsumimac!;

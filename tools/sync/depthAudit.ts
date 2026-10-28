@@ -1,3 +1,4 @@
+import { CLASSIC_VIEW,type ObliqueViewport } from '../../src/game/board';
 import { ChassisRenderer } from '../../src/game/rendering/chassisRenderer';
 import { chassisMesh } from '../../src/game/rendering/chassisMesh';
 import { projectLocal } from '../../src/game/rendering/chassisProjection';
@@ -6,14 +7,14 @@ import type { RenderItem } from '../../src/game/rendering/renderer';
 /** Independent triangle ray intersection (screen barycentrics), checked against
  * colors rendered by the real production shader, one chassis at a time.
  * Submission-order equality alone cannot establish correct visibility. */
-export function depthAudit(items:RenderItem[]) {
-  const w=400,h=704,renderer=new ChassisRenderer(),copy=document.createElement('canvas');copy.width=w;copy.height=h;
+export function depthAudit(items:RenderItem[],view:Readonly<ObliqueViewport>=CLASSIC_VIEW) {
+  const w=view.width,h=view.height,renderer=new ChassisRenderer(),copy=document.createElement('canvas');copy.width=w;copy.height=h;
   const ctx=copy.getContext('2d')!;
-  const pixels=(items:RenderItem[])=>{ctx.clearRect(0,0,w,h);ctx.drawImage(renderer.draw(items,w,h),0,0);return ctx.getImageData(0,0,w,h).data;};
+  const pixels=(items:RenderItem[])=>{ctx.clearRect(0,0,w,h);ctx.drawImage(renderer.draw(items,w,h,view),0,0);return ctx.getImageData(0,0,w,h).data;};
   const actual=pixels(items),solo=items.map(item=>pixels([item]));
   const maps=items.map(item=>{
     const depths=new Float64Array(w*h).fill(Infinity),margins=new Float32Array(w*h);
-    const mesh=chassisMesh(item).map(v=>projectLocal(item,v.p));
+    const mesh=chassisMesh(item).map(v=>{const p=projectLocal(item,v.p);return {...p,y:p.y+view.offsetY};});
     for(let i=0;i<mesh.length;i+=3) {
       const a=mesh[i]!,b=mesh[i+1]!,c=mesh[i+2]!,area=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
       if(Math.abs(area)<1e-10)continue;

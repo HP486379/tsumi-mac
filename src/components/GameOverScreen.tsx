@@ -18,7 +18,7 @@ export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle,m
   const [shareMsg, setShareMsg] = useState('');
   const onShare = async () => {
     const url = typeof location !== 'undefined' && location.protocol.startsWith('http') ? location.href.split('#')[0] : undefined;
-    const r = await shareText((mode==='real'?'【実寸モード】\n':'')+buildShareText(score, url));
+    const r = await shareText((mode==='real'?'【実寸モード 540×900】\n':'')+buildShareText(score, url));
     setShareMsg(
       r === 'shared' ? '共有しました' : r === 'copied' ? '結果をクリップボードにコピーしました' : r === 'cancelled' ? '共有をキャンセルしました' : 'コピーできませんでした',
     );
@@ -26,7 +26,7 @@ export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle,m
   return (
     <main className="screen result-screen" data-testid="result-screen">
       <h2 className="collapse-title">積みMac崩壊</h2>
-      {mode==='real'&&<p data-testid="result-mode">実寸モードの記録</p>}
+      {mode==='real'&&<p data-testid="result-mode">実寸モード 540×900の記録</p>}
       {newRecord && <p className="new-record" data-testid="new-record">最高散財額を更新！</p>}
       <dl className="result-table">
         <div className="hl"><dt>散財総額</dt><dd data-testid="result-spent">{formatYen(score.spent)}</dd></div>

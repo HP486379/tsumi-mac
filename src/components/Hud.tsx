@@ -27,7 +27,7 @@ export function Hud({ hud, onPause,mode='classic' }: { hud: HudState | null; onP
         <span className="hud-value" data-testid="hud-index">{formatYen(s?.fieldValue ?? 0)}</span>
       </div>
       <div className="hud-item small lv">
-        <span className="hud-label">{mode==='real'?<span data-testid="game-mode">実寸モード / レベル</span>:'レベル'}</span>
+        <span className="hud-label">{mode==='real'?<span data-testid="game-mode">実寸540×900 / レベル</span>:'レベル'}</span>
         <span className="hud-value" data-testid="hud-level">{s?.level ?? 1}</span>
       </div>
       <div className="hud-item small lines">

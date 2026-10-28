@@ -1,6 +1,7 @@
 /** Matter.js ワールドの生成とボディファクトリ */
 import Matter from 'matter-js';
-import { CELL, FIELD_H, FIELD_W, WALL_THICKNESS } from '../config';
+import { CELL, WALL_THICKNESS } from '../config';
+import { CLASSIC_BOARD,type BoardSpec } from '../board';
 import { DEVICES, type DeviceKind } from '../../data/devices';
 import { deviceCells,realSize,type GameMode,type FragmentGeometry } from '../../data/gameModes';
 
@@ -12,7 +13,7 @@ export interface PhysicsWorld {
   walls: Matter.Body[];
 }
 
-export function createPhysicsWorld(): PhysicsWorld {
+export function createPhysicsWorld(board:Readonly<BoardSpec>=CLASSIC_BOARD): PhysicsWorld {
   const engine = Engine.create();
   engine.gravity.x = 0;
   engine.gravity.y = 1;
@@ -24,11 +25,11 @@ export function createPhysicsWorld(): PhysicsWorld {
 
   const t = WALL_THICKNESS;
   const wallOpts = { isStatic: true, friction: 0.4, frictionStatic: 0.6, restitution: 0, label: 'wall' };
-  const floor = Bodies.rectangle(FIELD_W / 2, FIELD_H + t / 2, FIELD_W + t * 2, t, { ...wallOpts, label: 'floor' });
+  const floor = Bodies.rectangle(board.width / 2, board.height + t / 2, board.width + t * 2, t, { ...wallOpts, label: 'floor' });
   // 左右の壁は上方向に十分高くし、跳ね上がったボディも外に出ないようにする
-  const wallH = FIELD_H * 3;
-  const left = Bodies.rectangle(-t / 2, FIELD_H - wallH / 2, t, wallH, { ...wallOpts, friction: 0.05, label: 'wallL' });
-  const right = Bodies.rectangle(FIELD_W + t / 2, FIELD_H - wallH / 2, t, wallH, { ...wallOpts, friction: 0.05, label: 'wallR' });
+  const wallH = board.height * 3;
+  const left = Bodies.rectangle(-t / 2, board.height - wallH / 2, t, wallH, { ...wallOpts, friction: 0.05, label: 'wallL' });
+  const right = Bodies.rectangle(board.width + t / 2, board.height - wallH / 2, t, wallH, { ...wallOpts, friction: 0.05, label: 'wallR' });
   const walls = [floor, left, right];
   Composite.add(engine.world, walls);
   return { engine, walls };

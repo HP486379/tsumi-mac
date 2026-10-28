@@ -2,7 +2,8 @@
  * Canvas 2D レンダラー。論理座標（360×648）で描き、変換行列で画面ピクセルへスケーリングする。
  * 背景は事前描画したキャッシュを使い、毎フレームの描画コストを抑える。
  */
-import { CELL, COLS, DANGER_Y, FIELD_H, FIELD_W, ROWS } from '../config';
+import { CELL } from '../config';
+import { CLASSIC_BOARD,type BoardSpec } from '../board';
 import { SpriteCache, drawDevice, type SpriteKey } from './sprites';
 
 export interface RenderItem {
@@ -46,18 +47,18 @@ export class Renderer {
   scale = 1;
   frames = 0;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  constructor(private readonly canvas: HTMLCanvasElement,readonly board:Readonly<BoardSpec>=CLASSIC_BOARD) {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D context unavailable');
     this.ctx = ctx;
-    this.resize(FIELD_W, FIELD_H, 1);
+    this.resize(this.board.width, this.board.height, 1);
   }
 
   /** CSS表示サイズとdevicePixelRatioから内部バッファを決める */
   resize(cssW: number, cssH: number, dpr: number): void {
-    const s = Math.max(0.5, Math.min(MAX_PIXEL_SCALE, Math.min(cssW / FIELD_W, cssH / FIELD_H) * Math.min(dpr, 2)));
-    const bw = Math.round(FIELD_W * s);
-    const bh = Math.round(FIELD_H * s);
+    const s = Math.max(0.5, Math.min(MAX_PIXEL_SCALE, Math.min(cssW / this.board.width, cssH / this.board.height) * Math.min(dpr, 2)));
+    const bw = Math.round(this.board.width * s);
+    const bh = Math.round(this.board.height * s);
     if (bw === this.canvas.width && bh === this.canvas.height && Math.abs(s - this.scale) < 1e-3 && this.bg) return;
     this.scale = s;
     this.canvas.width = bw;
@@ -68,35 +69,35 @@ export class Renderer {
 
   private buildBackground(s: number): HTMLCanvasElement {
     const c = document.createElement('canvas');
-    c.width = Math.round(FIELD_W * s);
-    c.height = Math.round(FIELD_H * s);
+    c.width = Math.round(this.board.width * s);
+    c.height = Math.round(this.board.height * s);
     const ctx = c.getContext('2d');
     if (!ctx) return c;
     ctx.scale(s, s);
-    const g = ctx.createLinearGradient(0, 0, 0, FIELD_H);
+    const g = ctx.createLinearGradient(0, 0, 0, this.board.height);
     g.addColorStop(0, '#1b1f2a');
     g.addColorStop(1, '#10131a');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, FIELD_W, FIELD_H);
+    ctx.fillRect(0, 0, this.board.width, this.board.height);
     // 危険ゾーン
     ctx.fillStyle = 'rgba(255,70,90,0.08)';
-    ctx.fillRect(0, 0, FIELD_W, DANGER_Y);
+    ctx.fillRect(0, 0, this.board.width, this.board.dangerY);
     // グリッド
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1 / s;
     ctx.beginPath();
-    for (let c2 = 1; c2 < COLS; c2++) {
+    for (let c2 = 1; c2 < this.board.cols; c2++) {
       ctx.moveTo(c2 * CELL, 0);
-      ctx.lineTo(c2 * CELL, FIELD_H);
+      ctx.lineTo(c2 * CELL, this.board.height);
     }
-    for (let r = 1; r < ROWS; r++) {
+    for (let r = 1; r < this.board.rows; r++) {
       ctx.moveTo(0, r * CELL);
-      ctx.lineTo(FIELD_W, r * CELL);
+      ctx.lineTo(this.board.width, r * CELL);
     }
     ctx.stroke();
     // 床
     ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(0, FIELD_H - 2, FIELD_W, 2);
+    ctx.fillRect(0, this.board.height - 2, this.board.width, 2);
     return c;
   }
 
@@ -117,13 +118,13 @@ export class Renderer {
     // 行消しフラッシュ
     for (const f of st.flashes) {
       ctx.fillStyle = `rgba(255,240,170,${Math.min(0.75, f.life * 1.5)})`;
-      ctx.fillRect(0, f.row * CELL, FIELD_W, CELL);
+      ctx.fillRect(0, f.row * CELL, this.board.width, CELL);
     }
 
     // 落下ガイド
     if (st.guide) {
       ctx.fillStyle = 'rgba(127,211,255,0.07)';
-      ctx.fillRect(st.guide.minX, st.guide.top, st.guide.maxX - st.guide.minX, FIELD_H - st.guide.top);
+      ctx.fillRect(st.guide.minX, st.guide.top, st.guide.maxX - st.guide.minX, this.board.height - st.guide.top);
     }
 
     // デバイス
@@ -150,17 +151,17 @@ export class Renderer {
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, DANGER_Y);
-    ctx.lineTo(FIELD_W, DANGER_Y);
+    ctx.moveTo(0, this.board.dangerY);
+    ctx.lineTo(this.board.width, this.board.dangerY);
     ctx.stroke();
     ctx.setLineDash([]);
     if (st.dangerRatio > 0) {
       ctx.fillStyle = 'rgba(255,70,90,0.85)';
-      ctx.fillRect(0, DANGER_Y - 5, FIELD_W * st.dangerRatio, 4);
+      ctx.fillRect(0, this.board.dangerY - 5, this.board.width * st.dangerRatio, 4);
       ctx.font = 'bold 13px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillText('積みすぎ警告', FIELD_W / 2, DANGER_Y - 8);
+      ctx.fillText('積みすぎ警告', this.board.width / 2, this.board.dangerY - 8);
     }
 
     // フロートテキスト

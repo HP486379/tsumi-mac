@@ -1,4 +1,5 @@
 import { chassisMesh, modelDimensions } from './chassisMesh';
+import { CLASSIC_VIEW,type ObliqueViewport } from '../board';
 import { CAMERA, chassisPose } from './chassisProjection';
 import type { RenderItem } from './renderer';
 import { SoftwareChassis } from './softwareChassis';
@@ -7,6 +8,7 @@ export const CHASSIS_VERTEX_SHADER = `
 attribute vec3 position, normal;
 uniform vec4 pose;
 uniform vec2 viewport;
+uniform vec2 viewportOffset;
 uniform vec2 xyScale;
 uniform vec2 sourceOffset;
 varying vec3 local, norm, surface;
@@ -15,7 +17,7 @@ void main() {
   local=position+vec3(sourceOffset,0.); surface=normal; norm=vec3(rotation*(normal.xy/xyScale),normal.z);
   vec2 p=pose.xy+rotation*(position.xy*xyScale);
   vec2 screen=vec2(${CAMERA.tx.toFixed(6)}+${CAMERA.a.toFixed(6)}*p.x+${CAMERA.zx.toFixed(6)}*position.z,${CAMERA.ty.toFixed(6)}+${CAMERA.b.toFixed(6)}*p.x+${CAMERA.d.toFixed(6)}*p.y+${CAMERA.zy.toFixed(6)}*position.z);
-  gl_Position=vec4(screen/viewport*vec2(2.,-2.)+vec2(-1.,1.),position.z/1024.,1.);
+  gl_Position=vec4((screen+viewportOffset)/viewport*vec2(2.,-2.)+vec2(-1.,1.),position.z/1024.,1.);
 }`;
 const fragment = `
 precision mediump float;
@@ -99,16 +101,17 @@ class GpuChassisRenderer {
     gl.attachShader(program,compile(gl.VERTEX_SHADER,CHASSIS_VERTEX_SHADER));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'Chassis shader link');
     this.program=program;
-    for(const name of ['viewport','pose','xyScale','sourceOffset','dimensions','kind','active','refurb','cutTop','cutBottom','realMode','mini4']) this.uniforms[name]=gl.getUniformLocation(program,name);
+    for(const name of ['viewport','viewportOffset','pose','xyScale','sourceOffset','dimensions','kind','active','refurb','cutTop','cutBottom','realMode','mini4']) this.uniforms[name]=gl.getUniformLocation(program,name);
     for(const name of ['position','normal'])this.attributes[name]=gl.getAttribLocation(program,name);
   }
-  draw(items:readonly RenderItem[],width:number,height:number):HTMLCanvasElement {
+  draw(items:readonly RenderItem[],width:number,height:number,view:Readonly<ObliqueViewport>=CLASSIC_VIEW):HTMLCanvasElement {
     const gl=this.gl;
     if(this.canvas.width!==width || this.canvas.height!==height) {this.canvas.width=width;this.canvas.height=height;}
     gl.viewport(0,0,width,height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.useProgram(this.program);
     const uniform=(name:string)=>this.uniforms[name]!;
-    gl.uniform2f(uniform('viewport'),400,704);
+    gl.uniform2f(uniform('viewport'),view.width,view.height);
+    gl.uniform2f(uniform('viewportOffset'),0,view.offsetY);
     for(const item of items) {
       const key=JSON.stringify(item.key);
       let mesh=this.meshes.get(key);
@@ -146,11 +149,11 @@ let sharedGpu: GpuChassisRenderer | null | undefined;
 let software: SoftwareChassis | undefined;
 export class ChassisRenderer {
   constructor() {if(sharedGpu===undefined) {try {sharedGpu=new GpuChassisRenderer();} catch {sharedGpu=null;}}}
-  draw(items:readonly RenderItem[],width:number,height:number):HTMLCanvasElement {
+  draw(items:readonly RenderItem[],width:number,height:number,view:Readonly<ObliqueViewport>=CLASSIC_VIEW):HTMLCanvasElement {
     // Stable ownership only for exactly coplanar/interpenetrating pixels.
     // All ordinary overlap is resolved by the Z buffer, not this order.
     const ordered=items.map(item=>({item,key:JSON.stringify(item)})).sort((a,b)=>a.key<b.key?-1:a.key>b.key?1:0).map(entry=>entry.item);
-    if(sharedGpu?.available())return sharedGpu.draw(ordered,width,height);
-    software??=new SoftwareChassis();return software.draw(ordered,width,height);
+    if(sharedGpu?.available())return sharedGpu.draw(ordered,width,height,view);
+    software??=new SoftwareChassis();return software.draw(ordered,width,height,view);
   }
 }

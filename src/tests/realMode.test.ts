@@ -7,7 +7,9 @@ import { modelDimensions,chassisMesh } from '../game/rendering/chassisMesh';
 import { chassisPose,worldFromLocal } from '../game/rendering/chassisProjection';
 import { planRealRowClear } from '../game/grid/realRowClear';
 import { polygonArea } from '../game/physics/geometry';
-import { CELL,FIELD_H,FIELD_W } from '../game/config';
+import { CELL } from '../game/config';
+import { REAL_BOARD } from '../game/board';
+const FIELD_H=REAL_BOARD.height,FIELD_W=REAL_BOARD.width;
 import { createDeviceBody } from '../game/physics/world';
 import { loadHighScore,submitResult } from '../game/systems/highscore';
 
@@ -39,7 +41,7 @@ describe('real scale game mode',()=>{
  });
  it('a small M4 rests on the Pro shell between handles, rather than floating on a bounding box',()=>{
    const s=sim(),a=s.placeLocked('pro',3,12),b=s.placeLocked('miniM4',3,8);
-   Matter.Body.setPosition(a.body,{x:180,y:500});Matter.Body.setPosition(b.body,{x:180,y:320});
+   Matter.Body.setPosition(a.body,{x:180,y:752});Matter.Body.setPosition(b.body,{x:180,y:572});
    for(let i=0;i<700;i++)s.step();
    expect(a.body.parts.length).toBe(6);
    // Contact can naturally tilt the mini onto one handle. Measure its actual
@@ -61,8 +63,8 @@ describe('real scale game mode',()=>{
    }
  });
  it('clears a naturally filled real Studio row and preserves the ledger',()=>{
-   const s=sim();for(let col=0;col<10;col+=2)s.placeLocked('studio',col,17);
-   expect(s.checkRows()).toBe(1);expect(s.score().lines).toBe(1);expect(s.score().spent).toBeCloseTo(s.score().cleared+s.score().fieldValue,6);expect(s.entities.size).toBe(0);s.destroy();
+   const s=sim();for(let col=0;col<14;col+=2)s.placeLocked('studio',col,24);s.placeLocked('studio',14,23,1);
+   expect(s.checkRows()).toBe(1);expect(s.score().lines).toBe(1);expect(s.score().spent).toBeCloseTo(s.score().cleared+s.score().fieldValue,6);expect(s.entities.size).toBe(1);s.destroy();
  });
  it('repeated cuts of fractional fragments conserve source offsets and value',()=>{
    const size=realSize('pro'),p={id:7,kind:'pro' as const,refurb:false,cx:180,cy:400,angle:.2,wCells:size.w/CELL,hCells:size.h/CELL,value:100,vx:0,vy:0};

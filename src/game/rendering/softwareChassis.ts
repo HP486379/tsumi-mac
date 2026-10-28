@@ -1,3 +1,4 @@
+import { CLASSIC_VIEW,type ObliqueViewport } from '../board';
 import { chassisMesh, modelDimensions, type V3 } from './chassisMesh';
 import type { RenderItem } from './renderer';
 import { chassisPose, projectWorld, worldFromLocal } from './chassisProjection';
@@ -8,9 +9,9 @@ export class SoftwareChassis {
   readonly canvas=document.createElement('canvas');
   private ctx=this.canvas.getContext('2d')!;
   private cache=new Map<string,ReturnType<typeof chassisMesh>>();
-  draw(items:readonly RenderItem[],width:number,height:number):HTMLCanvasElement {
+  draw(items:readonly RenderItem[],width:number,height:number,view:Readonly<ObliqueViewport>=CLASSIC_VIEW):HTMLCanvasElement {
     // Bound fallback work independently of display DPR.
-    const scale=Math.min(1,width/400,height/704),w=Math.round(400*scale),h=Math.round(704*scale);
+    const scale=Math.min(1,width/view.width,height/view.height),w=Math.round(view.width*scale),h=Math.round(view.height*scale);
     this.canvas.width=w;this.canvas.height=h;
     const frame=this.ctx.createImageData(w,h),zBuffer=new Float32Array(w*h).fill(Infinity);
     for(const item of items) {
@@ -19,7 +20,7 @@ export class SoftwareChassis {
       const d=modelDimensions(item),source=item.key.geometry?.source,dim={...d,w:source?.w??d.w,h:source?.h??d.h},pose=chassisPose(item),c=Math.cos(item.angle),s=Math.sin(item.angle);
       const vertices=mesh.map(v=>{
         const world=worldFromLocal(pose,v.p),screen=projectWorld(...world);
-        return {x:screen.x*scale,y:screen.y*scale,p:v.p,n:v.n};
+        return {x:screen.x*scale,y:(screen.y+view.offsetY)*scale,p:v.p,n:v.n};
       });
       for(let i=0;i<vertices.length;i+=3) {
         const a=vertices[i]!,b=vertices[i+1]!,d=vertices[i+2]!;

@@ -1,11 +1,11 @@
 import { useEffect, useState, type RefObject } from 'react';
-import { FIELD_H, FIELD_W } from '../game/config';
+import { CLASSIC_BOARD,type BoardSpec } from '../game/board';
 
 export interface StageSize { width: number; height: number; dpr: number }
 
-/** ステージ要素に収まる最大の 360:648 サイズを求める（リサイズ・画面回転に追従） */
-export function useStageSize(ref: RefObject<HTMLElement | null>): StageSize {
-  const [size, setSize] = useState<StageSize>({ width: FIELD_W, height: FIELD_H, dpr: 1 });
+/** モードの論理盤面全体をステージ内へ同率で収める（リサイズ・画面回転に追従）。 */
+export function useStageSize(ref: RefObject<HTMLElement | null>,board:Readonly<BoardSpec>=CLASSIC_BOARD): StageSize {
+  const [size, setSize] = useState<StageSize>({ width: board.width, height: board.height, dpr: 1 });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -14,9 +14,9 @@ export function useStageSize(ref: RefObject<HTMLElement | null>): StageSize {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const r = el.getBoundingClientRect();
-        const k = Math.max(0.2, Math.min(r.width / FIELD_W, r.height / FIELD_H));
-        const width = Math.floor(FIELD_W * k);
-        const height = Math.floor(FIELD_H * k);
+        const k = Math.max(0.2, Math.min(r.width / board.width, r.height / board.height));
+        const width = Math.floor(board.width * k);
+        const height = Math.floor(board.height * k);
         const dpr = window.devicePixelRatio || 1;
         setSize((prev) => (prev.width === width && prev.height === height && prev.dpr === dpr ? prev : { width, height, dpr }));
       });
@@ -32,6 +32,6 @@ export function useStageSize(ref: RefObject<HTMLElement | null>): StageSize {
       window.removeEventListener('orientationchange', measure);
       window.visualViewport?.removeEventListener('resize', measure);
     };
-  }, [ref]);
+  }, [ref,board]);
   return size;
 }

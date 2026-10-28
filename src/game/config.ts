@@ -1,4 +1,4 @@
-/** ゲーム全体の定数。論理座標系（360×648）で定義し、画面ピクセルとは分離する。 */
+/** 現行モードの定数。実寸モードの盤面寸法はboard.tsで分離し、画面ピクセルとも独立させる。 */
 export const COLS = 10;
 export const ROWS = 18;
 export const CELL = 36;

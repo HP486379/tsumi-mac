@@ -29,7 +29,7 @@ function storage(): StorageLike | null {
 
 export function loadHighScore(store: StorageLike | null = storage(),mode:GameMode='classic'): HighScore {
   try {
-    const raw = store?.getItem(mode==='real'?HS_KEY+'.real':HS_KEY);
+    const raw = store?.getItem(mode==='real'?HS_KEY+'.real.540x900.v1':HS_KEY);
     if (!raw) return { ...EMPTY_HIGHSCORE };
     const v = JSON.parse(raw) as Partial<HighScore>;
     return {
@@ -55,7 +55,7 @@ export function submitResult(s: ScoreSnapshot, store: StorageLike | null = stora
     plays: prev.plays + 1,
   };
   try {
-    store?.setItem(mode==='real'?HS_KEY+'.real':HS_KEY, JSON.stringify(hs));
+    store?.setItem(mode==='real'?HS_KEY+'.real.540x900.v1':HS_KEY, JSON.stringify(hs));
   } catch {
     /* 容量不足等は無視 */
   }

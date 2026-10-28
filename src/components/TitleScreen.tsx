@@ -30,7 +30,7 @@ export function TitleScreen({ highScore, settings, onSettings, onStart, onRealSt
           積みはじめる
         </button>
         <button type="button" className="btn" data-testid="real-start-button" onClick={onRealStart}>実寸モードで積む</button>
-        <small className="mode-description">実機の寸法比で積む新モード。記録は通常モードと別に保存。</small>
+        <small className="mode-description">540×900の広い盤面で実機の寸法比を再現。旧実寸モードの記録とは別に保存。</small>
         <button type="button" className="btn" data-testid="howto-button" onClick={onHowTo}>
           遊び方
         </button>

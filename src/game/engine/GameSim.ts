@@ -5,9 +5,10 @@
  */
 import Matter from 'matter-js';
 import {
-  ARR_MS, BASE_FALL_SPEED, CELL, COLS, DAS_MS, FALL_SPEED_PER_LEVEL, FIELD_H, FIELD_W,
+  ARR_MS, BASE_FALL_SPEED, CELL, DAS_MS, FALL_SPEED_PER_LEVEL,
   HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,
 } from '../config';
+import { boardForMode,type BoardSpec } from '../board';
 import { BIG_SPEND_THRESHOLD, DEVICES, formatYen, type DeviceKind } from '../../data/devices';
 import { deviceCells,type GameMode,type FragmentGeometry } from '../../data/gameModes';
 import { planRealRowClear } from '../grid/realRowClear';
@@ -55,10 +56,11 @@ const ROW_CHECK_MAX_SPEED = 1.0;
 
 export class GameSim {
   readonly mode:GameMode;
+  readonly board:Readonly<BoardSpec>;
   readonly world: PhysicsWorld;
   readonly entities = new Map<number, DeviceEntity>();
   readonly ledger = new ScoreLedger();
-  readonly danger = new DangerMonitor();
+  readonly danger: DangerMonitor;
   readonly lock = new LockMonitor();
   readonly input = new InputState();
   readonly spawner: Spawner;
@@ -85,7 +87,9 @@ export class GameSim {
 
   constructor(private readonly cb: SimCallbacks = {}, opts: SimOptions = {}) {
     this.mode=opts.mode??'classic';
-    this.world = createPhysicsWorld();
+    this.board=boardForMode(this.mode);
+    this.danger=new DangerMonitor(this.board.dangerY);
+    this.world = createPhysicsWorld(this.board);
     this.spawner = new Spawner(opts.seed ?? (Date.now() & 0x7fffffff));
     this.randomEvents = opts.randomEvents ?? true;
     this.autoSpawn = opts.autoSpawn ?? true;
@@ -115,8 +119,8 @@ export class GameSim {
   spawnTicket(ticket: SpawnTicket): DeviceEntity | null {
     const spec = DEVICES[ticket.kind];
     const cells=deviceCells(ticket.kind,this.mode);
-    const col0 = Math.floor((COLS - cells.w) / 2);
-    const cx = (col0 + cells.w / 2) * CELL;
+    const col0 = Math.floor((this.board.cols - cells.w) / 2);
+    const cx = this.mode==='real'?this.board.width/2:(col0 + cells.w / 2) * CELL;
     const cy = (cells.h * CELL) / 2;
     const poly = rectVertices(cx, cy, cells.w * CELL, cells.h * CELL, 0);
     if (this.overlapsAny(poly, null)) {
@@ -135,7 +139,7 @@ export class GameSim {
     this.lock.reset();
     this.cb.onSound?.('spawn', 1);
     if (ticket.price >= BIG_SPEND_THRESHOLD) {
-      this.floaters.push({ text: `散財！ ${formatYen(ticket.price)}`, x: FIELD_W / 2, y: 120, life: 1.6, maxLife: 1.6, color: '#ffd36e', size: 24, vy: -0.4 });
+      this.floaters.push({ text: `散財！ ${formatYen(ticket.price)}`, x: this.board.width / 2, y: 120, life: 1.6, maxLife: 1.6, color: '#ffd36e', size: 24, vy: -0.4 });
       this.shake = Math.max(this.shake, ticket.kind === 'pro' ? 8 : 4);
       this.cb.onSound?.('money', 1);
       this.cb.onMessage?.({ kind: 'spend', title: '散財！', detail: `${spec.name} ${formatYen(ticket.price)}` });
@@ -204,8 +208,8 @@ export class GameSim {
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W } = this.worldDims(e, this.q);
     const candidate = Math.round((this.targetX - (W * CELL) / 2) / CELL) * CELL + dir * CELL;
-    const left = this.mode==='real'?Math.max(0,Math.min(FIELD_W-W*CELL,candidate)):candidate;
-    if (left < -0.5 || left + W * CELL > FIELD_W + 0.5) return false;
+    const left = this.mode==='real'?Math.max(0,Math.min(this.board.width-W*CELL,candidate)):candidate;
+    if (left < -0.5 || left + W * CELL > this.board.width + 0.5) return false;
     const nx = left + (W * CELL) / 2;
     const poly = rectVertices(nx, e.body.position.y, e.wCells * CELL, e.hCells * CELL, this.q * HALF_PI);
     if (this.overlapsAny(poly, e)) return false;
@@ -225,8 +229,8 @@ export class GameSim {
     for (const dy of [0, -CELL / 2, -CELL]) {
       for (const kick of [0, -1, 1, -2, 2]) {
         const left = baseLeft + kick * CELL;
-        if (this.mode==='classic' && (left < -0.5 || left + W * CELL > FIELD_W + 0.5)) continue;
-        const nx = this.mode==='real'?Math.max(W*CELL/2,Math.min(FIELD_W-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
+        if (this.mode==='classic' && (left < -0.5 || left + W * CELL > this.board.width + 0.5)) continue;
+        const nx = this.mode==='real'?Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
         const poly = rectVertices(nx, y + dy, e.wCells * CELL, e.hCells * CELL, nq * HALF_PI);
         if (this.overlapsAny(poly, e)) continue;
         this.q = nq;
@@ -364,7 +368,7 @@ export class GameSim {
   private cullEscaped(): void {
     for (const e of [...this.entities.values()]) {
       const p = e.body.position;
-      if (p.y > FIELD_H + 120 || p.x < -120 || p.x > FIELD_W + 120) {
+      if (p.y > this.board.height + 120 || p.x < -120 || p.x > this.board.width + 120) {
         this.escaped++;
         this.ledger.removeEntity(e.id);
         this.removeEntityBody(e);
@@ -381,13 +385,13 @@ export class GameSim {
       if(this.mode==='real'&&e.body.parts.length>1)polys.push(...e.body.parts.slice(1).map(p=>p.vertices));
       else polys.push(e.body.vertices);
     }
-    return computeOccupancy(polys);
+    return computeOccupancy(polys,this.board);
   }
 
   /** 揃った行を検出して整理する。消去した行数を返す */
   checkRows(forcedRows?:number[]): number {
     if (this.status !== 'running') return 0;
-    const rows = forcedRows??findFullRows(this.occupancy());
+    const rows = forcedRows??findFullRows(this.occupancy(),this.board);
     if (rows.length === 0) return 0;
 
     const pieces: (PieceState & {geometry?:FragmentGeometry;vertices?:Polygon;polygons?:Polygon[]})[] = [];
@@ -420,18 +424,18 @@ export class GameSim {
     const combo = this.ledger.registerClear(rows.length);
     for (const r of rows) this.flashes.push({ row: r, life: 0.45 });
     const midY = ((rows[0]! + rows[rows.length - 1]! + 1) / 2) * CELL;
-    this.floaters.push({ text: '資産整理！', x: FIELD_W / 2, y: midY - 14, life: 1.3, maxLife: 1.3, color: '#8affc1', size: 26, vy: -0.5 });
-    this.floaters.push({ text: `+${formatYen(clearedYen)}`, x: FIELD_W / 2, y: midY + 16, life: 1.3, maxLife: 1.3, color: '#ffffff', size: 15, vy: -0.5 });
+    this.floaters.push({ text: '資産整理！', x: this.board.width / 2, y: midY - 14, life: 1.3, maxLife: 1.3, color: '#8affc1', size: 26, vy: -0.5 });
+    this.floaters.push({ text: `+${formatYen(clearedYen)}`, x: this.board.width / 2, y: midY + 16, life: 1.3, maxLife: 1.3, color: '#ffffff', size: 15, vy: -0.5 });
     this.cb.onSound?.('clear', 1);
     this.cb.onMessage?.({ kind: 'clear', title: '資産整理！', detail: `${rows.length}行 / ${formatYen(clearedYen)}` });
     if (combo >= 2) {
-      this.floaters.push({ text: `断捨離成功！ ×${combo}`, x: FIELD_W / 2, y: midY - 48, life: 1.6, maxLife: 1.6, color: '#ff9f6e', size: 24, vy: -0.6 });
+      this.floaters.push({ text: `断捨離成功！ ×${combo}`, x: this.board.width / 2, y: midY - 48, life: 1.6, maxLife: 1.6, color: '#ff9f6e', size: 24, vy: -0.6 });
       this.cb.onSound?.('combo', 1);
       this.cb.onMessage?.({ kind: 'combo', title: '断捨離成功！', detail: `${combo}コンボ` });
     }
     if (this.ledger.level > this.lastLevel) {
       this.lastLevel = this.ledger.level;
-      this.floaters.push({ text: `LEVEL ${this.lastLevel}`, x: FIELD_W / 2, y: FIELD_H / 2, life: 1.4, maxLife: 1.4, color: '#7fd3ff', size: 22, vy: -0.3 });
+      this.floaters.push({ text: `LEVEL ${this.lastLevel}`, x: this.board.width / 2, y: this.board.height / 2, life: 1.4, maxLife: 1.4, color: '#7fd3ff', size: 22, vy: -0.3 });
       this.cb.onMessage?.({ kind: 'level', title: `レベル${this.lastLevel}`, detail: '落下速度アップ' });
     }
     return rows.length;
@@ -444,7 +448,7 @@ export class GameSim {
       title = ev.title;
       detail = ev.detail;
     }
-    this.floaters.push({ text: title, x: FIELD_W / 2, y: 150, life: 1.6, maxLife: 1.6, color: type === 'launch' ? '#ff9f6e' : '#8affc1', size: 20, vy: -0.25 });
+    this.floaters.push({ text: title, x: this.board.width / 2, y: 150, life: 1.6, maxLife: 1.6, color: type === 'launch' ? '#ff9f6e' : '#8affc1', size: 20, vy: -0.25 });
     this.cb.onSound?.('event', 1);
     this.cb.onMessage?.({ kind: 'event', title, detail });
   }

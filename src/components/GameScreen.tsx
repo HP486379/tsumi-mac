@@ -9,6 +9,7 @@ import { useStageSize } from '../hooks/useStageSize';
 import { Hud } from './Hud';
 import { TouchControls } from './TouchControls';
 import { PauseOverlay } from './PauseOverlay';
+import { boardForMode,obliqueViewport } from '../game/board';
 import type { GameMode } from '../data/gameModes';
 
 declare global {
@@ -41,7 +42,8 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [obliqueOpen, setObliqueOpen] = useState(() => window.matchMedia('(min-width: 1000px) and (min-height: 560px)').matches);
   const toastId = useRef(0);
-  const size = useStageSize(stageRef);
+  const board=boardForMode(mode),view=obliqueViewport(board);
+  const size = useStageSize(stageRef,board);
   const onGameOverRef = useRef(onGameOver);
   onGameOverRef.current = onGameOver;
 
@@ -128,7 +130,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
     observer.observe(surface);
     window.addEventListener('resize', resize);
     return () => { observer.disconnect(); window.removeEventListener('resize', resize); engine.setObliqueView(null); };
-  }, [obliqueOpen, audio, pushToast, seed]);
+  }, [obliqueOpen, audio, pushToast, seed,mode]);
 
   const press = useCallback((a: Action) => {
     audio.unlock();
@@ -172,7 +174,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
             if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation();
           }}>斜めビュー <span>LIVE / 閲覧専用</span></summary>
           <div id="oblique-content">
-            <div className="oblique-surface" ref={obliqueSurfaceRef}>
+            <div className="oblique-surface" style={{aspectRatio: `${view.width} / ${view.height}`}} ref={obliqueSurfaceRef}>
               <canvas ref={obliqueRef} className="oblique-canvas" data-testid="oblique-canvas" aria-label="正面と同期した斜めビュー（閲覧専用）" />
               {collapse && <div className="oblique-status" data-testid="oblique-over">積みMac崩壊</div>}
             </div>
