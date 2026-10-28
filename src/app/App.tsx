@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { TitleScreen } from '../components/TitleScreen';
 import { HowToScreen } from '../components/HowToScreen';
 import { GameScreen } from '../components/GameScreen';
+import { TetrisScreen } from '../components/TetrisScreen';
 import { GameOverScreen } from '../components/GameOverScreen';
 import { AudioManager } from '../game/systems/audio';
 import { loadHighScore, loadSettings, saveSettings, submitResult, type HighScore, type Settings } from '../game/systems/highscore';
@@ -9,7 +10,7 @@ import type { ScoreSnapshot } from '../game/systems/scoring';
 
 import type { GameMode } from '../data/gameModes';
 
-type Screen = 'title' | 'howto' | 'game' | 'result';
+type Screen = 'title' | 'howto' | 'game' | 'result' | 'tetris';
 
 function seedFromUrl(): number | undefined {
   try {
@@ -61,9 +62,10 @@ export function App() {
   return (
     <div className="app" data-screen={screen}>
       {screen === 'title' && (
-        <TitleScreen highScore={highScore} settings={settings} onSettings={setSettings} onStart={()=>startGame('classic')} onRealStart={()=>startGame('real')} onHowTo={() => setScreen('howto')} />
+        <TitleScreen highScore={highScore} settings={settings} onSettings={setSettings} onStart={()=>startGame('classic')} onRealStart={()=>startGame('real')} onTetrisStart={()=>{audio.unlock();setScreen('tetris');}} onHowTo={() => setScreen('howto')} />
       )}
       {screen === 'howto' && <HowToScreen onBack={() => setScreen('title')} />}
+      {screen === 'tetris' && <TetrisScreen audio={audio} settings={settings} onSettings={setSettings} onTitle={toTitle} seed={seed}/>}
       {screen === 'game' && (
         <GameScreen mode={mode} key={gameKey} audio={audio} settings={settings} onSettings={setSettings} onGameOver={onGameOver} onTitle={toTitle} seed={seed} />
       )}

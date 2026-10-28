@@ -28,6 +28,9 @@ export interface Floater {
 export interface RowFlash { row: number; life: number }
 
 export interface RenderState {
+  /** Optional placement guide, used by the independent snap engine only. */
+  ghost?: RenderItem;
+  clearRegions?: {x0:number;x1:number;y0:number;y1:number}[];
   items: RenderItem[];
   guide: { minX: number; maxX: number; top: number } | null;
   dangerRatio: number;
@@ -41,6 +44,8 @@ export interface RenderState {
 const MAX_PIXEL_SCALE = 2.5;
 
 export class Renderer {
+  private gridVisible=true;
+  setGridVisible(visible:boolean){if(this.gridVisible===visible)return;this.gridVisible=visible;this.bg=this.buildBackground(this.scale);}
   private ctx: CanvasRenderingContext2D;
   private bg: HTMLCanvasElement | null = null;
   readonly sprites = new SpriteCache();
@@ -86,11 +91,11 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1 / s;
     ctx.beginPath();
-    for (let c2 = 1; c2 < this.board.cols; c2++) {
+    for (let c2 = 1; this.gridVisible && c2 < this.board.cols; c2++) {
       ctx.moveTo(c2 * CELL, 0);
       ctx.lineTo(c2 * CELL, this.board.height);
     }
-    for (let r = 1; r < this.board.rows; r++) {
+    for (let r = 1; this.gridVisible && r < this.board.rows; r++) {
       ctx.moveTo(0, r * CELL);
       ctx.lineTo(this.board.width, r * CELL);
     }
@@ -122,17 +127,19 @@ export class Renderer {
     }
 
     // 落下ガイド
+    for(const r of st.clearRegions??[]){ctx.fillStyle='#8affc155';ctx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);ctx.strokeStyle='#8affc1';ctx.lineWidth=1;ctx.strokeRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);}
     if (st.guide) {
       ctx.fillStyle = 'rgba(127,211,255,0.07)';
       ctx.fillRect(st.guide.minX, st.guide.top, st.guide.maxX - st.guide.minX, this.board.height - st.guide.top);
     }
 
     // デバイス
-    for (const it of st.items) {
+    for (const it of st.ghost?[st.ghost,...st.items]:st.items) {
       const sp = this.sprites.get(it.key.geometry?{...it.key,geometry:undefined,wCells:it.key.geometry.source.w/CELL,hCells:it.key.geometry.source.h/CELL,cutTop:false,cutBottom:false}:it.key);
       const w = it.key.wCells * CELL;
       const h = it.key.hCells * CELL;
       ctx.save();
+        if(it===st.ghost)ctx.globalAlpha=.28;
       ctx.translate(it.x, it.y);
       if (it.angle !== 0) ctx.rotate(it.angle);
       if(it.key.geometry){const g=it.key.geometry;ctx.beginPath();g.outline.forEach((v,i)=>i?ctx.lineTo(v.x,v.y):ctx.moveTo(v.x,v.y));ctx.closePath();ctx.clip();ctx.drawImage(sp,-g.source.w/2-g.source.offsetX,-g.source.h/2-g.source.offsetY,g.source.w,g.source.h);}

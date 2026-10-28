@@ -3,7 +3,7 @@ import { watchErrors } from './helpers';
 
 for(const fallback of [false,true])test(`540x900 fits, stacks full Pro towers and synchronizes both views (${fallback?'Canvas':'WebGL'})`,async({page,isMobile},info)=>{
  const errors=watchErrors(page);
- if(fallback)await page.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type:string,...args:unknown[]){return type==='webgl'?null:Reflect.apply(get,this,[type,...args]);} as typeof get;});
+ if(fallback)await page.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(this:HTMLCanvasElement,type:string,...args:unknown[]){return type==='webgl'?null:Reflect.apply(get,this,[type,...args]);} as typeof get;});
  await page.goto('/?seed=20261028');await page.getByTestId('real-start-button').click();
  await expect.poll(()=>page.evaluate(()=>window.__tsumimac!.state().board)).toEqual({width:540,height:900,cols:15,rows:25,cell:36,dangerY:72});
  const panel=page.getByTestId('oblique-panel');if(isMobile)await panel.locator('summary').tap();
