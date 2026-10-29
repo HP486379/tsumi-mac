@@ -8,11 +8,10 @@ interface Props {
   onSettings: (s: Settings) => void;
   onStart: () => void;
   onRealStart:()=>void;
-  onTetrisStart:()=>void;
   onHowTo: () => void;
 }
 
-export function TitleScreen({ highScore, settings, onSettings, onStart, onRealStart,onTetrisStart,onHowTo }: Props) {
+export function TitleScreen({ highScore, settings, onSettings, onStart, onRealStart,onHowTo }: Props) {
   return (
     <main className="screen title-screen" data-testid="title-screen">
       <div className="title-stack" aria-hidden="true">
@@ -32,8 +31,6 @@ export function TitleScreen({ highScore, settings, onSettings, onStart, onRealSt
         </button>
         <button type="button" className="btn" data-testid="real-start-button" onClick={onRealStart}>実寸モードで積む</button>
         <small className="mode-description">540×900の広い盤面で実機の寸法比を再現。旧実寸モードの記録とは別に保存。</small>
-        <button type="button" className="btn" data-testid="tetris-start-button" onClick={onTetrisStart}>テトリスモード</button>
-        <small className="mode-description">実寸のMacを接触面にスナップ。横360px以上の区間を消して連鎖！</small>
         <button type="button" className="btn" data-testid="howto-button" onClick={onHowTo}>
           遊び方
         </button>

@@ -68,8 +68,6 @@ export function chassisRadius(kind: DeviceKind, w: number, h: number): number {
 
 /** Read-only solid view. The constructor keeps the front cache argument for compatibility. */
 export class ObliqueRenderer {
-  private gridVisible=true;
-  setGridVisible(visible:boolean){if(this.gridVisible===visible)return;this.gridVisible=visible;this.background=null;this.resize(this.canvas.width,this.canvas.height,1);}
   private ctx: CanvasRenderingContext2D;
   private view;
   private projectPoint(x:number,y:number):Point {const p=projectPoint(x,y);return {x:p.x,y:p.y+this.view.offsetY};}
@@ -103,8 +101,8 @@ export class ObliqueRenderer {
     const corners = [[0, 0], [this.board.width, 0], [this.board.width, this.board.height], [0, this.board.height]].map(([x = 0, y = 0]) => this.projectPoint(x, y));
     this.polygon(ctx, corners); ctx.fillStyle = '#1b2330'; ctx.fill();
     ctx.strokeStyle = '#ffffff15'; ctx.lineWidth = 1;
-    for (let x = 0; this.gridVisible && x <= this.board.width; x += CELL) this.line(ctx, this.projectPoint(x, 0), this.projectPoint(x, this.board.height));
-    for (let y = 0; this.gridVisible && y <= this.board.height; y += CELL) this.line(ctx, this.projectPoint(0, y), this.projectPoint(this.board.width, y));
+    for (let x = 0; x <= this.board.width; x += CELL) this.line(ctx, this.projectPoint(x, 0), this.projectPoint(x, this.board.height));
+    for (let y = 0; y <= this.board.height; y += CELL) this.line(ctx, this.projectPoint(0, y), this.projectPoint(this.board.width, y));
     ctx.strokeStyle = '#7fd3ff80'; ctx.lineWidth = 2;
     this.line(ctx, this.projectPoint(0, this.board.height), this.projectPoint(this.board.width, this.board.height));
   }
@@ -138,10 +136,7 @@ export class ObliqueRenderer {
     }
     ctx.restore();
 
-    if(state.clearRegions?.length){ctx.save();ctx.setTransform(A*scale,B*scale,0,D*scale,TX*scale,(TY+this.view.offsetY)*scale);ctx.fillStyle='#8affc155';for(const r of state.clearRegions)ctx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);ctx.restore();}
     ctx.drawImage(this.chassis.draw(state.items, this.canvas.width, this.canvas.height,this.view), 0, 0, this.view.width, this.view.height);
-    // The translucent ghost is an intentional guide overlay, not a solid body.
-    if(state.ghost){ctx.save();ctx.globalAlpha=.28;ctx.drawImage(this.chassis.draw([state.ghost],this.canvas.width,this.canvas.height,this.view),0,0,this.view.width,this.view.height);ctx.restore();}
     ctx.setTransform(A * scale, B * scale, 0, D * scale, TX * scale, (TY+this.view.offsetY) * scale);
     ctx.strokeStyle = state.dangerRatio > 0 ? '#ff4a5e' : '#ff4a5e88';
     ctx.lineWidth = 2; ctx.setLineDash([8, 6]);

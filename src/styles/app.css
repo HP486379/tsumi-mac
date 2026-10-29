@@ -222,15 +222,6 @@ button { font: inherit; color: inherit; }
 .oblique-note { margin: 4px 8px 8px; color: var(--muted); font-size: .65rem; line-height: 1.5; }
 .oblique-status { position: absolute; inset: 0; display: grid; place-items: center; background: #28000888; color: #fff; font-weight: 900; pointer-events: none; }
 .operation-guide { margin-top: 14px; }
-.tetris-grid { width:100%; margin-top:8px; }
-.tetris-buttons { gap:5px; }
-.tetris-buttons .touch-btn { width:44px; height:48px; border-radius:12px; font-size:1.2rem; }
-.tetris-screen .hud-item.next { min-height:55px; }
-@media (max-aspect-ratio: 1/1) {
-  .tetris-screen .side-panel { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px; }
-  .tetris-screen .tetris-grid { width:auto; margin:0; font-size:.65rem; padding:5px; align-self:start; min-height:38px; }
-  .tetris-screen .oblique-surface { height:min(23dvh,180px); }
-}
 @media (max-aspect-ratio: 1/1) {
   .game-screen { grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "hud hud" "stage stage" "oblique oblique" "cl cr"; }
   .side-panel { display: block; grid-area: oblique; width: 100%; }
