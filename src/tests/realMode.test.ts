@@ -1,8 +1,8 @@
 import { describe,it,expect } from 'vitest';
 import Matter from 'matter-js';
 import { GameSim } from '../game/engine/GameSim';
-import { DEVICES,DEVICE_KINDS } from '../data/devices';
-import { realSize,REAL_MM,REAL_PX_PER_MM } from '../data/gameModes';
+import { DEVICE_KINDS } from '../data/devices';
+import { realSize,REAL_MM,REAL_PX_PER_MM,deviceCells } from '../data/gameModes';
 import { modelDimensions,chassisMesh } from '../game/rendering/chassisMesh';
 import { chassisPose,worldFromLocal } from '../game/rendering/chassisProjection';
 import { planRealRowClear } from '../game/grid/realRowClear';
@@ -92,6 +92,6 @@ describe('real scale game mode',()=>{
  it('default and explicit classic produce identical dimensions, physics and score',()=>{
    const a=new GameSim({}, {seed:123,randomEvents:false}),b=new GameSim({}, {mode:'classic',seed:123,randomEvents:false});
    for(let i=0;i<100;i++){a.step();b.step();}expect(a.renderState()).toEqual(b.renderState());expect(a.score()).toEqual(b.score());
-   expect(a.active!.wCells).toBe(DEVICES[a.active!.kind].w);a.destroy();b.destroy();
+   expect(a.active!.wCells).toBe(deviceCells(a.active!.kind,'classic').w);a.destroy();b.destroy();
  });
 });

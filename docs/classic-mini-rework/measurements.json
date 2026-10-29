@@ -1,0 +1,586 @@
+{
+  "base": "30aa736050ac5c31476822d5972d9ab0428af689",
+  "branch": "classic-mini-model-rework",
+  "backends": [
+    {
+      "backend": "webgl",
+      "transferVertexErrorPx": 0,
+      "protectedCases": [
+        {
+          "kind": "studio",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "studio",
+            "mode": "classic",
+            "mesh": "88a48e6b5e5b1e780ead0d423b694654469d4bb62e8ef63e11ef4faf6f8e1b04",
+            "front": "ac7a9f651e1eea48cf3061980a12e7d57e1a67ea8f64dd8bd08f15bdf051c77d",
+            "side": "7d291b019621f73c35044e00a9178e1453872b095da8e1dd572c2acd29a7e8a0"
+          }
+        },
+        {
+          "kind": "pro",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "pro",
+            "mode": "classic",
+            "mesh": "e75b14caab8ba581a01972bc9a9a5e27b13bd7b96cb29fa286f269f2e83f0bf0",
+            "front": "a6ef61bbe58192f67ba6a71138eb39aab42728489e89cfade56092cae49da9ab",
+            "side": "7c20f9c9bdc6ce1f8766e00d50f2bbe0c22b46cf92c54938159611aad683ba4c"
+          }
+        },
+        {
+          "kind": "macPro2013",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "macPro2013",
+            "mode": "classic",
+            "mesh": "38c88eb885e9b200cbe79310309fb0a1a8ba17fba41d67726a35710d7d7c7f81",
+            "front": "42ef7c13b8c06b1d0713f5cc2c78b4c7b1c93dce3ef196a809befa1ae94ee9ba",
+            "side": "22bad6831348606718e09b920bc431864a459907dd57d4179e2bb43a6325e273"
+          }
+        },
+        {
+          "kind": "miniM1",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM1",
+            "mode": "real",
+            "mesh": "67645092507a8c2947ccd8d3b316b9276be3879cdd49958a7e805361e0114bdf",
+            "front": "a436f1d8b7e8ef2b6c6a91cb31fea8515a19c93d3d75b60b75e1c33a0fe8d4e9",
+            "side": "ff079e2619d6584110a7f4dc2df288dd33de4dfefdbc6be642b975f40657d225"
+          }
+        },
+        {
+          "kind": "miniM2",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM2",
+            "mode": "real",
+            "mesh": "67645092507a8c2947ccd8d3b316b9276be3879cdd49958a7e805361e0114bdf",
+            "front": "a436f1d8b7e8ef2b6c6a91cb31fea8515a19c93d3d75b60b75e1c33a0fe8d4e9",
+            "side": "ff079e2619d6584110a7f4dc2df288dd33de4dfefdbc6be642b975f40657d225"
+          }
+        },
+        {
+          "kind": "miniM4",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM4",
+            "mode": "real",
+            "mesh": "73dc380e950953eeac5ae2199d8f52fccb98081a196f7788c0274d58295e45d8",
+            "front": "b700eb45e584f917525019ea8342dcb0fb91823220bbcceb6c675aea1cbd6b04",
+            "side": "6f9052b923df7d3f6d6ae6c808c3c8ff6fab599937852040b895a22b0b2a81a9"
+          }
+        },
+        {
+          "kind": "studio",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "studio",
+            "mode": "real",
+            "mesh": "20e2983454ddf72479794206336a4446297e173e1b69b12b90bd6faa5f3598e2",
+            "front": "44a6ef233c7f624f3c023dc0a916edd678addac513ab445fb260949c5cf1a941",
+            "side": "7ad14c840308b37e14a2143d4dff51f5a6c20f27163a9d85e246fdee2be4d2bf"
+          }
+        },
+        {
+          "kind": "pro",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "pro",
+            "mode": "real",
+            "mesh": "8a11e7d2a73642a7b5317dfdaf609949da1a62bc4ca03b093efa53ef51e936dc",
+            "front": "b78f6fb61c079d611de60f4adf5b26c4dc2cddc6c03c1aaa36a011e991273906",
+            "side": "24caa70370f3e845cf067954f74c330258be7c2bd2185f31b0b497926dff2755"
+          }
+        },
+        {
+          "kind": "macPro2013",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "macPro2013",
+            "mode": "real",
+            "mesh": "636bd80e273e3b10da5c2ead5f351ba9c6e89b5a58ca24570e3e4289d7f42f71",
+            "front": "b2f732c26e0b32ce4a39656e75b60f38828547e87f8cf7cb131d2643fedf6b56",
+            "side": "8f2a207620b5fb22059dd5b7a763b71fa3fbbf986649c0a4d4288a10038eb24a"
+          }
+        }
+      ],
+      "models": [
+        {
+          "kind": "miniM1",
+          "before": [
+            72,
+            36,
+            72
+          ],
+          "after": [
+            72,
+            13.157360406091357,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 634.8599094212192,
+                "max": 648.0172698273105,
+                "x": 144,
+                "y": 641.4385896242649,
+                "angle": 0
+              },
+              {
+                "min": 621.720264624834,
+                "max": 634.8776250309254,
+                "x": 144,
+                "y": 628.2989448278797,
+                "angle": 0
+              },
+              {
+                "min": 608.5758500011399,
+                "max": 621.7332104072312,
+                "x": 144,
+                "y": 615.1545302041856,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.017269827310542496,
+            "gaps": [
+              -0.01771560970621522,
+              -0.012945782397196126
+            ],
+            "score": {
+              "spent": 150000,
+              "cleared": 0,
+              "fieldValue": 150000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        },
+        {
+          "kind": "miniM2",
+          "before": [
+            72,
+            36,
+            72
+          ],
+          "after": [
+            72,
+            13.157360406091357,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 634.8599094212192,
+                "max": 648.0172698273105,
+                "x": 144,
+                "y": 641.4385896242649,
+                "angle": 0
+              },
+              {
+                "min": 621.720264624834,
+                "max": 634.8776250309254,
+                "x": 144,
+                "y": 628.2989448278797,
+                "angle": 0
+              },
+              {
+                "min": 608.5758500011399,
+                "max": 621.7332104072312,
+                "x": 144,
+                "y": 615.1545302041856,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.017269827310542496,
+            "gaps": [
+              -0.01771560970621522,
+              -0.012945782397196126
+            ],
+            "score": {
+              "spent": 210000,
+              "cleared": 0,
+              "fieldValue": 210000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        },
+        {
+          "kind": "miniM4",
+          "before": [
+            36,
+            36,
+            36
+          ],
+          "after": [
+            72,
+            36,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 612.1263172369694,
+                "max": 648.1263172369694,
+                "x": 144,
+                "y": 630.1263172369694,
+                "angle": 0
+              },
+              {
+                "min": 576.2897669922669,
+                "max": 612.2897669922669,
+                "x": 144,
+                "y": 594.2897669922669,
+                "angle": 0
+              },
+              {
+                "min": 540.3768995106228,
+                "max": 576.3768995106228,
+                "x": 144,
+                "y": 558.3768995106228,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.1263172369693848,
+            "gaps": [
+              -0.16344975529750627,
+              -0.08713251835592928
+            ],
+            "score": {
+              "spent": 345000,
+              "cleared": 0,
+              "fieldValue": 345000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "backend": "canvas",
+      "transferVertexErrorPx": 0,
+      "protectedCases": [
+        {
+          "kind": "studio",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "studio",
+            "mode": "classic",
+            "mesh": "88a48e6b5e5b1e780ead0d423b694654469d4bb62e8ef63e11ef4faf6f8e1b04",
+            "front": "ac7a9f651e1eea48cf3061980a12e7d57e1a67ea8f64dd8bd08f15bdf051c77d",
+            "side": "b975566f501b214a8a9216aaf8050c8a6cd1bb8d0fe89229df66e8398c7c11b0"
+          }
+        },
+        {
+          "kind": "pro",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "pro",
+            "mode": "classic",
+            "mesh": "e75b14caab8ba581a01972bc9a9a5e27b13bd7b96cb29fa286f269f2e83f0bf0",
+            "front": "a6ef61bbe58192f67ba6a71138eb39aab42728489e89cfade56092cae49da9ab",
+            "side": "db7f7ce003f8763b305792668c70805a55d2f763c5e51d416f718b6585373979"
+          }
+        },
+        {
+          "kind": "macPro2013",
+          "mode": "classic",
+          "unchanged": true,
+          "hashes": {
+            "kind": "macPro2013",
+            "mode": "classic",
+            "mesh": "38c88eb885e9b200cbe79310309fb0a1a8ba17fba41d67726a35710d7d7c7f81",
+            "front": "42ef7c13b8c06b1d0713f5cc2c78b4c7b1c93dce3ef196a809befa1ae94ee9ba",
+            "side": "25e8ef4c2014caf46e0572ae5d8f894baa5f278382802f680270435fe168725b"
+          }
+        },
+        {
+          "kind": "miniM1",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM1",
+            "mode": "real",
+            "mesh": "67645092507a8c2947ccd8d3b316b9276be3879cdd49958a7e805361e0114bdf",
+            "front": "a436f1d8b7e8ef2b6c6a91cb31fea8515a19c93d3d75b60b75e1c33a0fe8d4e9",
+            "side": "c37fcb18e33e4d08ee8f746ce37187e977044bc329f57166b3d091af921a03dd"
+          }
+        },
+        {
+          "kind": "miniM2",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM2",
+            "mode": "real",
+            "mesh": "67645092507a8c2947ccd8d3b316b9276be3879cdd49958a7e805361e0114bdf",
+            "front": "a436f1d8b7e8ef2b6c6a91cb31fea8515a19c93d3d75b60b75e1c33a0fe8d4e9",
+            "side": "c37fcb18e33e4d08ee8f746ce37187e977044bc329f57166b3d091af921a03dd"
+          }
+        },
+        {
+          "kind": "miniM4",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "miniM4",
+            "mode": "real",
+            "mesh": "73dc380e950953eeac5ae2199d8f52fccb98081a196f7788c0274d58295e45d8",
+            "front": "b700eb45e584f917525019ea8342dcb0fb91823220bbcceb6c675aea1cbd6b04",
+            "side": "31a3e552764df36bed63f8e339fd251f339fcfa4cce2a2982a2543682a217f6e"
+          }
+        },
+        {
+          "kind": "studio",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "studio",
+            "mode": "real",
+            "mesh": "20e2983454ddf72479794206336a4446297e173e1b69b12b90bd6faa5f3598e2",
+            "front": "44a6ef233c7f624f3c023dc0a916edd678addac513ab445fb260949c5cf1a941",
+            "side": "eccf65f2c85de614eed12f259507e4c58a47f00a46b600eb73ca13e3e3cb47b4"
+          }
+        },
+        {
+          "kind": "pro",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "pro",
+            "mode": "real",
+            "mesh": "8a11e7d2a73642a7b5317dfdaf609949da1a62bc4ca03b093efa53ef51e936dc",
+            "front": "b78f6fb61c079d611de60f4adf5b26c4dc2cddc6c03c1aaa36a011e991273906",
+            "side": "b74a3b6b54ef2897cd4011229011b015f0f89b12b47575d7e9d315f753c6466f"
+          }
+        },
+        {
+          "kind": "macPro2013",
+          "mode": "real",
+          "unchanged": true,
+          "hashes": {
+            "kind": "macPro2013",
+            "mode": "real",
+            "mesh": "636bd80e273e3b10da5c2ead5f351ba9c6e89b5a58ca24570e3e4289d7f42f71",
+            "front": "b2f732c26e0b32ce4a39656e75b60f38828547e87f8cf7cb131d2643fedf6b56",
+            "side": "c4b72d0c9ab3b2163931de81460362076175a3a7d83c7d9fb46768b21ea490b5"
+          }
+        }
+      ],
+      "models": [
+        {
+          "kind": "miniM1",
+          "before": [
+            72,
+            36,
+            72
+          ],
+          "after": [
+            72,
+            13.157360406091357,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 634.8599094212192,
+                "max": 648.0172698273105,
+                "x": 144,
+                "y": 641.4385896242649,
+                "angle": 0
+              },
+              {
+                "min": 621.720264624834,
+                "max": 634.8776250309254,
+                "x": 144,
+                "y": 628.2989448278797,
+                "angle": 0
+              },
+              {
+                "min": 608.5758500011399,
+                "max": 621.7332104072312,
+                "x": 144,
+                "y": 615.1545302041856,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.017269827310542496,
+            "gaps": [
+              -0.01771560970621522,
+              -0.012945782397196126
+            ],
+            "score": {
+              "spent": 150000,
+              "cleared": 0,
+              "fieldValue": 150000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        },
+        {
+          "kind": "miniM2",
+          "before": [
+            72,
+            36,
+            72
+          ],
+          "after": [
+            72,
+            13.157360406091357,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 634.8599094212192,
+                "max": 648.0172698273105,
+                "x": 144,
+                "y": 641.4385896242649,
+                "angle": 0
+              },
+              {
+                "min": 621.720264624834,
+                "max": 634.8776250309254,
+                "x": 144,
+                "y": 628.2989448278797,
+                "angle": 0
+              },
+              {
+                "min": 608.5758500011399,
+                "max": 621.7332104072312,
+                "x": 144,
+                "y": 615.1545302041856,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.017269827310542496,
+            "gaps": [
+              -0.01771560970621522,
+              -0.012945782397196126
+            ],
+            "score": {
+              "spent": 210000,
+              "cleared": 0,
+              "fieldValue": 210000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        },
+        {
+          "kind": "miniM4",
+          "before": [
+            36,
+            36,
+            36
+          ],
+          "after": [
+            72,
+            36,
+            72
+          ],
+          "sameFrame": true,
+          "contacts": {
+            "steps": 700,
+            "entities": 3,
+            "escaped": 0,
+            "range": [
+              {
+                "min": 612.1263172369694,
+                "max": 648.1263172369694,
+                "x": 144,
+                "y": 630.1263172369694,
+                "angle": 0
+              },
+              {
+                "min": 576.2897669922669,
+                "max": 612.2897669922669,
+                "x": 144,
+                "y": 594.2897669922669,
+                "angle": 0
+              },
+              {
+                "min": 540.3768995106228,
+                "max": 576.3768995106228,
+                "x": 144,
+                "y": 558.3768995106228,
+                "angle": 0
+              }
+            ],
+            "floorError": 0.1263172369693848,
+            "gaps": [
+              -0.16344975529750627,
+              -0.08713251835592928
+            ],
+            "score": {
+              "spent": 345000,
+              "cleared": 0,
+              "fieldValue": 345000,
+              "lines": 0,
+              "combo": 0,
+              "maxCombo": 0,
+              "level": 1,
+              "timeMs": 11666.6666666666,
+              "devices": 3
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

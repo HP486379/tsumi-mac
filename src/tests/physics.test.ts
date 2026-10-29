@@ -5,6 +5,7 @@ import Matter from 'matter-js';
 import { describe, expect, it } from 'vitest';
 import { GameSim } from '../game/engine/GameSim';
 import { CELL, COLS, DANGER_Y, FIELD_H, FIELD_W } from '../game/config';
+import { deviceCells,classicMiniSize } from '../data/gameModes';
 import { DEVICE_KINDS, DEVICES, type DeviceKind } from '../data/devices';
 
 function newSim(opts: { autoSpawn?: boolean } = {}) {
@@ -41,14 +42,14 @@ function invariant(sim: GameSim) {
 }
 
 describe('デバイス出現', () => {
-  it('5種類すべてが正しい寸法・質量・価格で出現する', () => {
+  it('6種類すべてが正しい寸法・質量・価格で出現する', () => {
     for (const k of DEVICE_KINDS) {
       const { sim } = newSim();
       const e = spawn(sim, k);
       const spec = DEVICES[k];
       const b = e.body.bounds;
-      expect(b.max.x - b.min.x).toBeCloseTo(spec.w * CELL, 3);
-      expect(b.max.y - b.min.y).toBeCloseTo(spec.h * CELL, 3);
+      expect(b.max.x - b.min.x).toBeCloseTo(deviceCells(k,'classic').w * CELL, 3);
+      expect(b.max.y - b.min.y).toBeCloseTo(deviceCells(k,'classic').h * CELL, 3);
       expect(b.min.y).toBeCloseTo(0, 3);
       expect(e.body.mass).toBeCloseTo(spec.mass, 3);
       expect(sim.score().spent).toBe(spec.price);
@@ -81,12 +82,12 @@ describe('物理挙動', () => {
     }
   });
 
-  it('回転後の当たり判定：縦にしたMac miniは1列幅になり、壁際で回転できる', () => {
+  it('回転後の当たり判定：縦にした薄型Mac miniは実寸厚の幅になり、壁際で回転できる', () => {
     const { sim } = newSim();
     const e = spawn(sim, 'miniM1');
     expect(sim.tryRotate(1)).toBe(true);
     const b = e.body.bounds;
-    expect(b.max.x - b.min.x).toBeCloseTo(CELL, 1);
+    expect(b.max.x - b.min.x).toBeCloseTo(classicMiniSize('miniM1').h, 1);
     expect(b.max.y - b.min.y).toBeCloseTo(2 * CELL, 1);
     for (let i = 0; i < 20; i++) sim.tryMove(1);
     expect(e.body.bounds.max.x).toBeCloseTo(FIELD_W, 1);
@@ -105,7 +106,7 @@ describe('物理挙動', () => {
     Matter.Body.setPosition(m.body, { x: 4.5 * CELL, y: 7 * CELL });
     // キックの最大左右2セル・上1セルを塞ぐ厚い壁を設置する。
     for (let r = 3; r <= 11; r++) {
-      for (const c of [2, 3, 5, 6]) {
+      for (const c of [1, 2, 5, 6]) {
         const wall = sim.placeLocked('miniM4', c, r);
         Matter.Body.setStatic(wall.body, true);
       }
@@ -160,19 +161,19 @@ describe('物理挙動', () => {
 describe('行消去（物理と論理グリッドの統合）', () => {
   it('1行消去：床の行が揃うと整理され、価格の二重計上がない', () => {
     const { sim } = newSim();
-    for (let c = 0; c < COLS; c += 2) sim.placeLocked('miniM1', c, 17);
+    for (let c = 0; c < COLS; c += 2) sim.placeLocked('miniM4', c, 17);
     steps(sim, 20);
     const s = sim.score();
     expect(s.lines).toBe(1);
     expect(sim.entities.size).toBe(0);
-    expect(s.cleared).toBeCloseTo(250_000, 3);
+    expect(s.cleared).toBeCloseTo(575_000, 3);
     expect(s.fieldValue).toBeCloseTo(0, 3);
     invariant(sim);
   });
 
   it('複数行消去：2行同時に揃うと2行整理される', () => {
     const { sim } = newSim();
-    for (const r of [16, 17]) for (let c = 0; c < COLS; c += 2) sim.placeLocked('miniM2', c, r);
+    for (const r of [16, 17]) for (let c = 0; c < COLS; c += 2) sim.placeLocked('miniM4', c, r);
     steps(sim, 20);
     expect(sim.score().lines).toBe(2);
     expect(sim.entities.size).toBe(0);
@@ -182,7 +183,7 @@ describe('行消去（物理と論理グリッドの統合）', () => {
   it('部分消去：Mac Pro は消去行だけ切り取られ、整理額は面積比で按分', () => {
     const { sim } = newSim();
     sim.placeLocked('pro', 0, 14); // 行14..17, 列0..1
-    for (let c = 2; c < COLS; c += 2) sim.placeLocked('miniM1', c, 17);
+    for (let c = 2; c < COLS; c += 2) sim.placeLocked('miniM4', c, 17);
     steps(sim, 20);
     const s = sim.score();
     expect(s.lines).toBe(1);
@@ -190,7 +191,7 @@ describe('行消去（物理と論理グリッドの統合）', () => {
     const frag = [...sim.entities.values()][0]!;
     expect(frag.fragment).toBe(true);
     expect(frag.hCells).toBe(3);
-    expect(s.cleared).toBeCloseTo(250_000 + 200_000, 3);
+    expect(s.cleared).toBeCloseTo(250_000 + 460_000, 3);
     expect(s.fieldValue).toBeCloseTo(750_000, 3);
     invariant(sim);
   });
@@ -198,7 +199,7 @@ describe('行消去（物理と論理グリッドの統合）', () => {
   it('行消去後の残存ボディは重力で落下して安定し、盤面外へ出ない', () => {
     const { sim } = newSim();
     sim.placeLocked('pro', 0, 14);
-    for (let c = 2; c < COLS; c += 2) sim.placeLocked('miniM1', c, 17);
+    for (let c = 2; c < COLS; c += 2) sim.placeLocked('miniM4', c, 17);
     sim.placeLocked('studio', 3, 15); // 行15..16, 列3..5（行17の上に載る）
     steps(sim, 20);
     expect(sim.score().lines).toBe(1);
@@ -216,18 +217,17 @@ describe('行消去（物理と論理グリッドの統合）', () => {
 
   it('9セルしか埋まっていない行は消えない（意図しない大量消去がない）', () => {
     const { sim } = newSim();
-    for (let c = 0; c < 8; c += 2) sim.placeLocked('miniM1', c, 17);
-    sim.placeLocked('miniM4', 8, 17);
+    for (let c = 0; c < 9; c += 3) sim.placeLocked('studio', c, 16);
     steps(sim, 60);
     expect(sim.score().lines).toBe(0);
-    expect(sim.entities.size).toBe(5);
+    expect(sim.entities.size).toBe(3);
   });
 
   it('実際の操作で行を完成させても整理される', () => {
     const { sim } = newSim();
-    for (let c = 0; c < 8; c += 2) sim.placeLocked('miniM1', c, 17);
+    for (let c = 0; c < 8; c += 2) sim.placeLocked('miniM4', c, 17);
     steps(sim, 30);
-    const e = spawn(sim, 'miniM1');
+    const e = spawn(sim, 'miniM4');
     for (let i = 0; i < 10; i++) sim.tryMove(1);
     expect(e.body.bounds.max.x).toBeCloseTo(FIELD_W, 1);
     sim.hardDrop();
@@ -249,16 +249,8 @@ describe('ゲームオーバー', () => {
 
   it('確定済みボディが危険ラインを2秒超え続けると終了（2秒未満では終了しない）', () => {
     const { sim, over } = newSim();
-    // 床から8列幅のレンガ積みで上端を危険ラインより上に（9・10列目は空けて行消去を防ぐ）
-    for (let r = 1; r < 18; r++) {
-      if (r % 2 === 0) {
-        for (let c = 0; c < 8; c += 2) sim.placeLocked('miniM1', c, r);
-      } else {
-        sim.placeLocked('miniM4', 0, r);
-        for (let c = 1; c < 7; c += 2) sim.placeLocked('miniM1', c, r);
-        sim.placeLocked('miniM4', 7, r);
-      }
-    }
+    // 8 columns of the transferred M4 body; leave the last two empty.
+    for(let r=1;r<18;r++)for(let c=0;c<8;c+=2)sim.placeLocked('miniM4',c,r);
     steps(sim, 60);
     const top = Math.min(...[...sim.entities.values()].map((e) => e.body.bounds.min.y));
     expect(top).toBeLessThan(DANGER_Y);

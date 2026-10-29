@@ -11,8 +11,8 @@ describe('actual surface contacts, separate from collision envelopes',()=>{
       expect(p.worldGap).toBeLessThan(1e-9);expect(p.screenGap).toBeLessThan(1e-9);
     }
   });
-  it('reproduces the old 22.915736px mini gap and verifies its removal on real triangles',()=>{
-    expect(audit.oldMiniGap.worldGap).toBeCloseTo(22.91573604060916,8);
+  it('thin mini caps meet without a fitted-position offset',()=>{
+    expect(audit.oldMiniGap.worldGap).toBeLessThan(1e-9);
     expect(audit.miniGap.worldGap).toBeLessThan(1e-9);
   });
   it.each(DEVICE_KINDS)('%s actual surface reaches the floor in all four quadrants',kind=>{
@@ -23,7 +23,7 @@ describe('actual surface contacts, separate from collision envelopes',()=>{
     expect(m.maxZ-m.minZ).toBeGreaterThan(m.depth*.99);
   });
   it('retains the baseline depths on every model, independently of collision height',()=>{
-    const expected={miniM1:72,miniM2:72,miniM4:36,studio:108,pro:144*45/52.9,macPro2013:108*16.7/25.1};
+    const expected={miniM1:72,miniM2:72,miniM4:72,studio:108,pro:144*45/52.9,macPro2013:108*16.7/25.1};
     for(const m of audit.morphology)expect(m.depth).toBeCloseTo(expected[m.kind],10);
   });
   it('Late 2013 retains a circular model-space footprint, not a rounded box',()=>{

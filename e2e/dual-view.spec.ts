@@ -49,7 +49,7 @@ test('dual view uses the same live frame through movement, rotation, clearing an
   await page.getByTestId('pause-restart').click();
   await expect.poll(async () => (await state(page)).score.devices).toBe(1);
   await checkSync();
-  await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM2', c, 17); });
+  await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM4', c, 17); });
   await expect.poll(async () => (await state(page)).score.lines).toBeGreaterThan(0);
   await checkSync();
   await page.keyboard.press('KeyP');

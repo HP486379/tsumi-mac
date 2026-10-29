@@ -52,7 +52,6 @@ void main() {
       float py=local.y/dimensions.y;
       if(mini4>.5){
         vec2 q=local.xy/dimensions.x;
-        if(realMode<.5)q.y=(q.y-dimensions.y/dimensions.x*.13)*2.54+dimensions.y/dimensions.x*.13;
         vec2 a=abs(q-vec2(-20./127.,dimensions.y/dimensions.x*.13))-vec2(3.2/127.,.8/127.);
         vec2 b=abs(q-vec2(-1./127.,dimensions.y/dimensions.x*.13))-vec2(3.2/127.,.8/127.);
         float hole=min(length(max(a,0.))+min(max(a.x,a.y),0.),length(max(b,0.))+min(max(b.x,b.y),0.))-.65/127.;
@@ -64,10 +63,10 @@ void main() {
         if(dimensions.x>50. && x>-.03 && x<.17 && py>.17 && py<.21) color=vec3(.09,.11,.13);
       }
       if(mini4>.5 && realMode<.5){
-        if(length(vec2(local.x-dimensions.x*.35,(local.y-dimensions.y*.12)*2.54))<.6)color=vec3(.87,.98,.9);
+        if(length(vec2(local.x-dimensions.x*.35,local.y-dimensions.y*.12))<.6)color=vec3(.87,.98,.9);
       }else if(abs(local.x-dimensions.x*.35)<1. && abs(local.y-dimensions.y*.12)<.75) color=vec3(.87,.98,.9);
     }
-    if(cutBottom<.5 && local.y>dimensions.y*.5-(mini4>.5 && realMode<.5 ? .8/2.54 : 1.3)) color*=.48;
+    if(cutBottom<.5 && local.y>dimensions.y*.5-(mini4>.5 && realMode<.5 ? 1.3*197./72. : 1.3)) color*=.48;
     if(cutTop>.5 && surface.y<-.8 || cutBottom>.5 && surface.y>.8) color=vec3(.34,.37,.41);
     if(refurb>.5 && front>.5 && local.x>dimensions.x*.17 && local.y<-dimensions.y*.15) color=vec3(.1,.55,.34);
   }

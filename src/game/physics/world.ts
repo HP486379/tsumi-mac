@@ -79,7 +79,7 @@ export function createDeviceBody(o: DeviceBodyOptions): Matter.Body {
     }
     body=Body.create({...options,parts});Body.setCentre(body,{x:o.cx,y:o.cy});
   }else body=Bodies.rectangle(o.cx,o.cy,o.wCells*CELL,o.hCells*CELL,options);
-  const cells=deviceCells(o.kind,o.mode??'classic'),full=realSize(o.kind);
+  const cells=deviceCells(o.kind,o.mode??'classic'),full=o.mode==='real'?realSize(o.kind):{w:cells.w*CELL,h:cells.h*CELL};
   const areaRatio = o.geometry?body.area/(full.w*full.h):(o.wCells * o.hCells) / (cells.w * cells.h);
   Body.setMass(body, spec.mass * areaRatio);
   if (o.angle !== 0) Body.setAngle(body, o.angle);

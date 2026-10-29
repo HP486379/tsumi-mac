@@ -1,5 +1,6 @@
 import Matter from 'matter-js';
-import { DEVICES, DEVICE_KINDS, type DeviceKind } from '../../src/data/devices';
+import { DEVICE_KINDS, type DeviceKind } from '../../src/data/devices';
+import { deviceCells } from '../../src/data/gameModes';
 import { CELL, FIELD_H } from '../../src/game/config';
 import { GameSim } from '../../src/game/engine/GameSim';
 import { modelDimensions, type V3 } from '../../src/game/rendering/chassisMesh';
@@ -8,7 +9,7 @@ import type { RenderItem } from '../../src/game/rendering/renderer';
 
 export const ANGLES=[0,Math.PI/2,Math.PI,3*Math.PI/2,-.41,.33,2*Math.PI];
 export const makeItem=(kind:DeviceKind,x=180,y=400,angle=0):RenderItem=>({x,y,angle,active:false,
-  key:{kind,wCells:DEVICES[kind].w,hCells:DEVICES[kind].h,refurb:false,cutTop:false,cutBottom:false}});
+  key:{kind,wCells:deviceCells(kind,'classic').w,hCells:deviceCells(kind,'classic').h,refurb:false,cutTop:false,cutBottom:false}});
 const distance=(a:{x:number;y:number},b:{x:number;y:number})=>Math.hypot(a.x-b.x,a.y-b.y);
 const inverse=(p:{x:number;y:number})=>{const x=(p.x-28)/.84;return {x,y:(p.y-38-.12*x)/.9};};
 export function auditAll() {

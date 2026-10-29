@@ -26,14 +26,7 @@ export async function startGame(page: Page) {
 export async function buildWall(page: Page, top = 1) {
   await page.evaluate((t) => {
     const d = window.__tsumimac!;
-    for (let r = t; r < 18; r++) {
-      if (r % 2 === 0) for (let c = 0; c < 8; c += 2) d.placeLocked('miniM1', c, r);
-      else {
-        d.placeLocked('miniM4', 0, r);
-        for (let c = 1; c < 7; c += 2) d.placeLocked('miniM1', c, r);
-        d.placeLocked('miniM4', 7, r);
-      }
-    }
+    for(let r=t;r<18;r++)for(let c=0;c<8;c+=2)d.placeLocked('miniM4',c,r);
   }, top);
 }
 

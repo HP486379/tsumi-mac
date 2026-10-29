@@ -1,4 +1,5 @@
 import { DEVICES, type DeviceKind } from '../../data/devices';
+import { isClassicMini } from '../../data/gameModes';
 import { OFFICIAL_DIMENSIONS } from '../../data/officialDimensions';
 import { CELL } from '../config';
 import { CLASSIC_BOARD,obliqueViewport,type BoardSpec } from '../board';
@@ -24,12 +25,12 @@ export function projectPoint(x: number, y: number): Point {
 /** Depth in px = official depth(cm) x (front width px / official width cm). Per-model, not a shared factor. */
 export function depthPx(kind: DeviceKind): number {
   const dim = OFFICIAL_DIMENSIONS[kind];
-  return dim.depthCm * pxPerCm(dim, DEVICES[kind].w * CELL);
+  return dim.depthCm * pxPerCm(dim, (isClassicMini(kind)?2:DEVICES[kind].w) * CELL);
 }
 
 function depthVec(kind: DeviceKind): Point {
   const dim = OFFICIAL_DIMENSIONS[kind];
-  return depthVector(dim, pxPerCm(dim, DEVICES[kind].w * CELL));
+  return depthVector(dim, pxPerCm(dim, (isClassicMini(kind)?2:DEVICES[kind].w) * CELL));
 }
 
 export function projectedDevice(item: RenderItem): { front: Point[]; back: Point[] } {

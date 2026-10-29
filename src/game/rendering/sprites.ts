@@ -32,12 +32,14 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 /** ローカル座標（左上0,0、幅w・高さh、論理px）でデバイスを描く */
 export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void {
   if(key.mode==='real'){drawRealDevice(ctx,key);return;}
+  if(key.kind==='miniM1'||key.kind==='miniM2'){drawThinClassicMini(ctx,key);return;}
   const spec = DEVICES[key.kind];
   const w = key.wCells * CELL;
   const h = key.hCells * CELL;
-  const classicM4=key.kind==='miniM4'; // Real mode returned above.
-  const pad = classicM4?.7:1.2;
-  const r = classicM4?1.5:key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
+  // The transferred M4 front reaches its collider's contact planes. Preserve
+  // the original inset for the other classic devices.
+  const pad = key.kind === 'miniM4' ? .1 : 1.2;
+  const r = key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
 
   if (key.kind === 'macPro2013') {
     // 黒い円筒：正面は円筒を真横から見たシルエット＋曲面の光沢（アルミ本体・上面ハイライトは描かない）
@@ -50,36 +52,24 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
     roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, r);
     ctx.fillStyle = g;
     ctx.fill();
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = key.kind === 'miniM4' ? .2 : 1.4;
     ctx.strokeStyle = 'rgba(20,24,30,0.75)';
     ctx.stroke();
 
     // 上面ハイライト
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, classicM4?.9:Math.min(5, h * 0.12), 3);
+    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
     ctx.fill();
   }
 
   switch (key.kind) {
-    case 'miniM1':
-    case 'miniM2': {
-      // 薄型ボックス：底面の黒いベースとステータスLED
-      ctx.fillStyle = 'rgba(30,34,40,0.55)';
-      roundRect(ctx, w * 0.12, h - 8, w * 0.76, 5, 2);
-      ctx.fill();
-      ctx.fillStyle = spec.accent;
-      ctx.beginPath();
-      ctx.arc(w - 10, h * 0.45, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
     case 'miniM4': {
-      // Keep the classic cell size; horizontal USB-C openings and headphone
+      // Transferred classic M1/M2 body; USB-C openings and headphone
       // jack use the same normalized locations as the solid renderer.
       ctx.fillStyle = 'rgba(30,34,40,0.6)';
       for(const x of [-20/127,-1/127]){roundRect(ctx,w*(.5+x-3.85/127),h*.63-w*1.45/127,w*7.7/127,w*2.9/127,w*.65/127);ctx.fill();}
       ctx.beginPath();ctx.arc(w*(.5+24/127),h*.63,w*1.75/127,0,Math.PI*2);ctx.fill();
-      ctx.fillRect(w*.12,h-1.5,w*.76,.8);
+      roundRect(ctx,w*.12,h-8,w*.76,5,2);ctx.fill();
       ctx.fillStyle='#def5e4';ctx.beginPath();ctx.arc(w*.85,h*.62,.6,0,Math.PI*2);ctx.fill();
       break;
     }
@@ -168,6 +158,16 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
   };
   if (key.cutTop) jag(2.5, 1);
   if (key.cutBottom) jag(h - 2.5, -1);
+}
+
+/** New thin classic front, in the same continuous pixels as its collider. */
+function drawThinClassicMini(ctx:CanvasRenderingContext2D,key:SpriteKey):void{
+ const w=key.wCells*CELL,h=key.hCells*CELL,spec=DEVICES[key.kind],g=ctx.createLinearGradient(0,0,0,h);
+ g.addColorStop(0,spec.body);g.addColorStop(1,spec.bodyDark);ctx.fillStyle=g;roundRect(ctx,.1,.1,w-.2,h-.2,Math.min(.45,h*.1));ctx.fill();
+ ctx.fillStyle='#ffffff55';ctx.fillRect(.8,.4,w-1.6,.35);ctx.fillStyle='#343a44';ctx.fillRect(w*.12,h-.75,w*.76,.6);
+ ctx.fillStyle=spec.accent;ctx.beginPath();ctx.arc(w*.85,h*.62,.6,0,Math.PI*2);ctx.fill();
+ if(h>=9){ctx.fillStyle='#26303a';ctx.font='6px system-ui,sans-serif';ctx.textBaseline='middle';ctx.fillText(spec.label,5,h*.5);}
+ if(key.refurb){ctx.fillStyle='#21a366';roundRect(ctx,w-10,.5,8,2,1);ctx.fill();}
 }
 
 /** Front projection in the same real-world XY coordinates as the collider. */

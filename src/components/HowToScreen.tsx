@@ -1,5 +1,6 @@
 import { DEVICE_KINDS, DEVICES, formatYen } from '../data/devices';
 import { OCCUPANCY_THRESHOLD } from '../game/config';
+import { deviceCells } from '../data/gameModes';
 
 export function HowToScreen({ onBack }: { onBack: () => void }) {
   return (
@@ -39,16 +40,17 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
         <p>スマートフォンでは画面下のボタン（左・右・回転・高速落下・一時停止）で操作します。</p>
       </section>
       <section>
-        <h3>登場デバイス（架空パラメータ）</h3>
+        <h3>登場デバイス（通常モード・架空パラメータ）</h3>
         <table className="devices">
           <thead><tr><th>名称</th><th>サイズ</th><th>質量</th><th>散財額</th></tr></thead>
           <tbody>
             {DEVICE_KINDS.map((k) => {
               const d = DEVICES[k];
+              const cells = deviceCells(k, 'classic');
               return (
                 <tr key={k}>
                   <td>{d.name}</td>
-                  <td>{d.w}×{d.h}</td>
+                  <td>{cells.w}×{Number(cells.h.toFixed(3))}</td>
                   <td>{d.mass}</td>
                   <td>{formatYen(d.price)}</td>
                 </tr>
@@ -56,6 +58,7 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
             })}
           </tbody>
         </table>
+        <p className="note">サイズは36px単位。薄型のM1・M2は約13.16px高で、2層では1行に足りず、3層で整理できます。M4は従来のM1・M2と同じ72×36pxです。</p>
         <p className="note">イベント「新製品発表」で高額機が続けて入荷、「整備済製品入荷」で次の3台が15%オフになります。</p>
       </section>
       <button type="button" className="btn primary" data-testid="howto-back" onClick={onBack}>

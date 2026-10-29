@@ -72,7 +72,7 @@ test.describe('PC（キーボード）', () => {
     await expect(page.getByTestId('toast').filter({ hasText: '新製品発表' })).toBeVisible();
     expect((await state(page)).status).toBe('running');
 
-    await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM2', c, 17); });
+    await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM4', c, 17); });
     await page.waitForFunction(() => window.__tsumimac!.state().score.lines >= 1);
     const sc = (await state(page)).score;
     expect(Math.abs(sc.spent - sc.fieldValue - sc.cleared)).toBeLessThan(1);

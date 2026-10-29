@@ -5,13 +5,14 @@ import { DEVICES } from '../../data/devices';
 import { OFFICIAL_DIMENSIONS } from '../../data/officialDimensions';
 import { CELL } from '../config';
 import type { RenderItem } from './renderer';
-import { realSize,REAL_PX_PER_MM } from '../../data/gameModes';
+import { realSize,REAL_PX_PER_MM,isClassicMini } from '../../data/gameModes';
 import { clipMesh } from './clipMesh';
 
 export type V3 = [number, number, number];
 export interface MeshVertex { p: V3; n: V3; part?:number }
 export function modelDimensions(item: RenderItem) {
   if(item.key.mode==='real')return {w:item.key.wCells*CELL,h:item.key.hCells*CELL,depth:realSize(item.key.kind).depth,scale:REAL_PX_PER_MM*10};
+  if(isClassicMini(item.key.kind))return {w:item.key.wCells*CELL,h:item.key.hCells*CELL,depth:72,scale:72/19.7};
   const d = OFFICIAL_DIMENSIONS[item.key.kind], spec = DEVICES[item.key.kind];
   const scale = Math.min(spec.w * CELL / d.widthCm, spec.h * CELL / d.heightCm);
   return { w: d.widthCm * scale * item.key.wCells / spec.w,
@@ -22,31 +23,32 @@ export function modelDimensions(item: RenderItem) {
  * Normals are analytic: adjacent top/front/side surfaces share the same vertices. */
 export function chassisMesh(item: RenderItem): MeshVertex[] {
   if(item.key.geometry){const g=item.key.geometry;return clipMesh(chassisMesh({...item,key:{...item.key,wCells:g.source.w/CELL,hCells:g.source.h/CELL,geometry:undefined,cutTop:false,cutBottom:false}}),g);}
-  const { w, h, depth } = modelDimensions(item), cylinder = item.key.kind === 'macPro2013';
-  const realMini=item.key.mode==='real'&&item.key.kind.startsWith('mini');
+  const dimensions=modelDimensions(item),{w,depth}=dimensions,cylinder=item.key.kind==='macPro2013';
   const classicM4=item.key.kind==='miniM4'&&item.key.mode!=='real';
-  const radius = cylinder ? w / 2 : classicM4?w*27/127:realMini?w*(item.key.kind==='miniM4'?27/127:30/197):Math.min(w, depth) * (item.key.kind === 'pro' ? 0.075 : 0.19);
-  const bevel = classicM4?Math.min(h*.15,w*.02):realMini?Math.min(h*.15,(item.key.kind==='miniM4'?2.4:1.2)*REAL_PX_PER_MM):Math.min(h * 0.15, w * 0.024);
-  // Classic keeps its square collision envelope. Compensate its Y mapping in
-  // the fillet only, so a 0.72px shoulder does not become a 1.83px bulge.
-  const yScale=classicM4?item.key.hCells*CELL/h:1,yBevel=bevel/yScale;
+  // Build the exact former M1 solid in its original model coordinates, then
+  // bake its Y mapping so clipping/physics/rendering share world-pixel units.
+  const legacyHeight=OFFICIAL_DIMENSIONS.miniM1.heightCm*(72/OFFICIAL_DIMENSIONS.miniM1.widthCm);
+  const h=classicM4?dimensions.h*(legacyHeight/36):dimensions.h,bakeY=dimensions.h/h;
+  const realMini=item.key.mode==='real'&&item.key.kind.startsWith('mini');
+  const thinMini=item.key.mode!=='real'&&(item.key.kind==='miniM1'||item.key.kind==='miniM2');
+  const radius = cylinder ? w / 2 : realMini||thinMini?w*(item.key.kind==='miniM4'?27/127:30/197):Math.min(w, depth) * (item.key.kind === 'pro' ? 0.075 : 0.19);
+  const bevel = realMini||thinMini?Math.min(h*.15,(item.key.kind==='miniM4'?2.4:1.2)*REAL_PX_PER_MM):Math.min(h * 0.15, w * 0.024);
   const tower = item.key.kind === 'pro';
   const topTrim = tower && !item.key.cutTop ? Math.min(7, h*.15) : 0;
   const bottomTrim = tower && !item.key.cutBottom ? Math.min(3, h*.1) : 0;
   const rings: MeshVertex[][] = [];
-  const levels = realMini||classicM4?Array.from({length:7},(_,i)=>i*Math.PI/12):[0, Math.PI / 6, Math.PI / 3, Math.PI / 2];
+  const levels = realMini||thinMini?Array.from({length:7},(_,i)=>i*Math.PI/12):[0, Math.PI / 6, Math.PI / 3, Math.PI / 2];
   for (const bottom of [false, true]) for (const angle of bottom ? [...levels].reverse() : levels) {
     const cut = bottom ? item.key.cutBottom : item.key.cutTop;
     const inset = cut ? 0 : bevel * (1 - Math.sin(angle));
-    const y = bottom ? h / 2 - bottomTrim - (cut ? 0 : yBevel * (1 - Math.cos(angle))) : -h / 2 + topTrim + (cut ? 0 : yBevel * (1 - Math.cos(angle)));
+    const y = bottom ? h / 2 - bottomTrim - (cut ? 0 : bevel * (1 - Math.cos(angle))) : -h / 2 + topTrim + (cut ? 0 : bevel * (1 - Math.cos(angle)));
     const ring: MeshVertex[] = [];
     for (let corner = 0; corner < 4; corner++) for (let j = 0; j <= 12; j++) {
       const t = -Math.PI + corner * Math.PI / 2 + j / 12 * Math.PI / 2;
       const nx = Math.cos(t), nz = Math.sin(t);
       const cx = cylinder ? 0 : (corner === 0 || corner === 3 ? -1 : 1) * (w / 2 - radius);
       const cz = cylinder ? depth / 2 : (corner < 2 ? radius : depth - radius);
-      let normal:V3=[nx*(cut?1:Math.sin(angle)),(bottom?1:-1)*(cut?0:Math.cos(angle)),nz*(cut?1:Math.sin(angle))];
-      if(classicM4){normal[1]*=yScale;const length=Math.hypot(...normal);normal=normal.map(n=>n/length) as V3;}
+      const normal:V3=[nx*(cut?1:Math.sin(angle)),(bottom?1:-1)*(cut?0:Math.cos(angle)),nz*(cut?1:Math.sin(angle))];
       ring.push({ p: [cx + (radius - inset) * nx, y, cz + (radius - inset) * nz], n:normal });
     }
     rings.push(ring);
@@ -91,5 +93,6 @@ export function chassisMesh(item: RenderItem): MeshVertex[] {
     }
     if(!item.key.cutBottom) for(const z of [depth*.12,depth*.88]) tube([x,h/2-bottomTrim,z],[x,h/2,z],1.5);
   }
+  if(classicM4)for(const v of new Set(mesh)){v.p=[v.p[0],v.p[1]*bakeY,v.p[2]];const n:V3=[v.n[0],v.n[1]/bakeY,v.n[2]],length=Math.hypot(...n);v.n=n.map(x=>x/length) as V3;}
   return mesh;
 }

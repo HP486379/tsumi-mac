@@ -3,12 +3,14 @@ import { chassisMesh, modelDimensions } from '../game/rendering/chassisMesh';
 import { DEVICE_KINDS, DEVICES, type DeviceKind } from '../data/devices';
 import { OFFICIAL_DIMENSIONS } from '../data/officialDimensions';
 import type { RenderItem } from '../game/rendering/renderer';
+import { deviceCells,isClassicMini,classicMiniSize } from '../data/gameModes';
 import { CELL } from '../game/config';
 
-const item=(kind:DeviceKind):RenderItem=>({x:180,y:300,angle:0,active:false,key:{kind,wCells:DEVICES[kind].w,hCells:DEVICES[kind].h,refurb:false,cutTop:false,cutBottom:false}});
+const item=(kind:DeviceKind):RenderItem=>({x:180,y:300,angle:0,active:false,key:{kind,wCells:deviceCells(kind,'classic').w,hCells:deviceCells(kind,'classic').h,refurb:false,cutTop:false,cutBottom:false}});
 describe('model-space chassis geometry',()=>{
   it.each(DEVICE_KINDS)('%s uses a uniform model-space scale before the Matter XY mapping',kind=>{
     const d=modelDimensions(item(kind)),official=OFFICIAL_DIMENSIONS[kind];
+    if(isClassicMini(kind)){const size=classicMiniSize(kind);expect(d.w).toBe(size.w);expect(d.h).toBe(size.h);expect(d.depth).toBe(72);return;}
     expect(d.w/official.widthCm).toBeCloseTo(d.h/official.heightCm);
     expect(d.depth/official.depthCm).toBeCloseTo(d.h/official.heightCm);
     expect(d.w).toBeLessThanOrEqual(DEVICES[kind].w*CELL);

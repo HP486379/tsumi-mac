@@ -10,13 +10,14 @@ import {
 } from '../config';
 import { boardForMode,type BoardSpec } from '../board';
 import { BIG_SPEND_THRESHOLD, DEVICES, formatYen, type DeviceKind } from '../../data/devices';
-import { deviceCells,type GameMode,type FragmentGeometry } from '../../data/gameModes';
+import { deviceCells,isClassicMini,type GameMode,type FragmentGeometry } from '../../data/gameModes';
 import { planRealRowClear } from '../grid/realRowClear';
 import type { DeviceEntity } from '../entities/DeviceEntity';
 import { createDeviceBody, createPhysicsWorld, type PhysicsWorld } from '../physics/world';
 import { convexOverlap, polygonAABB, rectVertices, type Polygon } from '../physics/geometry';
 import { computeOccupancy, findFullRows } from '../grid/occupancy';
-import { planRowClear, type PieceState } from '../grid/rowClear';
+import { type PieceState } from '../grid/rowClear';
+import { planClassicRowClear } from '../grid/classicRowClear';
 import { ScoreLedger, type ScoreSnapshot } from '../systems/scoring';
 import { DangerMonitor } from '../systems/danger';
 import { LockMonitor } from '../systems/lock';
@@ -208,7 +209,7 @@ export class GameSim {
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W } = this.worldDims(e, this.q);
     const candidate = Math.round((this.targetX - (W * CELL) / 2) / CELL) * CELL + dir * CELL;
-    const left = this.mode==='real'?Math.max(0,Math.min(this.board.width-W*CELL,candidate)):candidate;
+    const left = this.mode==='real'||isClassicMini(e.kind)?Math.max(0,Math.min(this.board.width-W*CELL,candidate)):candidate;
     if (left < -0.5 || left + W * CELL > this.board.width + 0.5) return false;
     const nx = left + (W * CELL) / 2;
     const poly = rectVertices(nx, e.body.position.y, e.wCells * CELL, e.hCells * CELL, this.q * HALF_PI);
@@ -224,13 +225,14 @@ export class GameSim {
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const nq = (this.q + dir + 4) % 4;
     const { W } = this.worldDims(e, nq);
-    const baseLeft = this.mode==='real'?e.body.position.x-(W*CELL)/2:Math.round((e.body.position.x - (W * CELL) / 2) / CELL) * CELL;
+    const continuous=this.mode==='real'||isClassicMini(e.kind);
+    const baseLeft = continuous?e.body.position.x-(W*CELL)/2:Math.round((e.body.position.x - (W * CELL) / 2) / CELL) * CELL;
     const y = e.body.position.y;
     for (const dy of [0, -CELL / 2, -CELL]) {
       for (const kick of [0, -1, 1, -2, 2]) {
         const left = baseLeft + kick * CELL;
-        if (this.mode==='classic' && (left < -0.5 || left + W * CELL > this.board.width + 0.5)) continue;
-        const nx = this.mode==='real'?Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
+        if (!continuous && (left < -0.5 || left + W * CELL > this.board.width + 0.5)) continue;
+        const nx = continuous?Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
         const poly = rectVertices(nx, y + dy, e.wCells * CELL, e.hCells * CELL, nq * HALF_PI);
         if (this.overlapsAny(poly, e)) continue;
         this.q = nq;
@@ -307,7 +309,8 @@ export class GameSim {
       this.input.queue.length = 0;
     }
 
-    if(this.mode==='real')for(let sub=0;sub<4;sub++)Engine.update(this.world.engine,STEP_MS/4);
+    const thinClassic=this.mode==='classic'&&[...this.entities.values()].some(e=>e.kind==='miniM1'||e.kind==='miniM2'||isClassicMini(e.kind)&&!!e.geometry);
+    if(this.mode==='real'||thinClassic)for(let sub=0;sub<4;sub++)Engine.update(this.world.engine,STEP_MS/4);
     else Engine.update(this.world.engine, STEP_MS);
 
     // 接地判定
@@ -400,10 +403,10 @@ export class GameSim {
       const b = e.body;
       pieces.push({
         id: e.id, kind: e.kind, refurb: e.refurb, cx: b.position.x, cy: b.position.y, angle: b.angle,
-        geometry:e.geometry,vertices:this.mode==='real'?b.vertices:undefined,polygons:this.mode==='real'&&b.parts.length>1?b.parts.slice(1).map(p=>p.vertices):undefined, wCells: e.wCells, hCells: e.hCells, value: this.ledger.valueOf(e.id), vx: b.velocity.x, vy: b.velocity.y,
+        geometry:e.geometry,vertices:this.mode==='real'||isClassicMini(e.kind)?b.vertices:undefined,polygons:this.mode==='real'&&b.parts.length>1?b.parts.slice(1).map(p=>p.vertices):undefined, wCells: e.wCells, hCells: e.hCells, value: this.ledger.valueOf(e.id), vx: b.velocity.x, vy: b.velocity.y,
       });
     }
-    const plan = this.mode==='real'?planRealRowClear(pieces, rows):planRowClear(pieces, rows);
+    const plan = this.mode==='real'?planRealRowClear(pieces, rows):planClassicRowClear(pieces, rows);
     let clearedYen = 0;
     for (const id of plan.removeIds) {
       const src = this.entities.get(id);
@@ -482,7 +485,7 @@ export class GameSim {
         x: e.body.position.x,
         y: e.body.position.y,
         angle: e.body.angle,
-        key: { ...(this.mode==='real'?{mode:this.mode,geometry:e.geometry}:{}), kind: e.kind, wCells: e.wCells, hCells: e.hCells, refurb: e.refurb, cutTop: e.cutTop, cutBottom: e.cutBottom },
+        key: { ...(this.mode==='real'?{mode:this.mode,geometry:e.geometry}:e.geometry?{geometry:e.geometry}:{}), kind: e.kind, wCells: e.wCells, hCells: e.hCells, refurb: e.refurb, cutTop: e.cutTop, cutBottom: e.cutBottom },
         active: e === this.active,
       });
     }

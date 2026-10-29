@@ -1,4 +1,5 @@
-import { DEVICES, DEVICE_KINDS, type DeviceKind } from '../../src/data/devices';
+import { DEVICE_KINDS, type DeviceKind } from '../../src/data/devices';
+import { deviceCells } from '../../src/data/gameModes';
 import { CELL, FIELD_H } from '../../src/game/config';
 import { chassisMesh, modelDimensions } from '../../src/game/rendering/chassisMesh';
 import { chassisPose, projectWorld, worldFromLocal, type Pose } from '../../src/game/rendering/chassisProjection';
@@ -27,8 +28,8 @@ export function fittedPose(item:RenderItem):Pose {
 }
 export const FLAT_KINDS=DEVICE_KINDS.filter(k=>k!=='pro');
 export function surfacePair(lowerKind:DeviceKind,upperKind:DeviceKind,angle:number,legacy=false) {
-  const lower=makeItem(lowerKind,160,FIELD_H-DEVICES[lowerKind].h*CELL/2,angle);
-  const distance=(DEVICES[lowerKind].h+DEVICES[upperKind].h)*CELL/2;
+  const lower=makeItem(lowerKind,160,FIELD_H-deviceCells(lowerKind,'classic').h*CELL/2,angle);
+  const distance=(deviceCells(lowerKind,'classic').h+deviceCells(upperKind,'classic').h)*CELL/2;
   const upper=makeItem(upperKind,lower.x+Math.sin(angle)*distance,lower.y-Math.cos(angle)*distance,angle);
   const dl=modelDimensions(lower),du=modelDimensions(upper),z=Math.min(dl.depth,du.depth)/2;
   const l=surfaceY(lowerKind,0,z),u=surfaceY(upperKind,0,z),pose=legacy?fittedPose:chassisPose;
