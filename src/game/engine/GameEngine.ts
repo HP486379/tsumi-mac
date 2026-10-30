@@ -3,10 +3,12 @@
  * requestAnimationFrame で描画し、物理は固定ステップ（60Hz）で進める。React の state は
  * HUD_INTERVAL_MS ごとにまとめて通知し、毎フレームは更新しない。
  */
+import Matter from 'matter-js';
 import { HUD_INTERVAL_MS } from '../config';
 import type { DeviceKind } from '../../data/devices';
 import { boardForMode,type BoardSpec } from '../board';
-import type { GameMode } from '../../data/gameModes';
+import { physicsMode,type PlayMode } from '../../data/playModes';
+import { CountSim,type CountSnapshot } from '../count/CountSim';
 import { GameSim, type GameMessage, type GameOverReason } from './GameSim';
 import { FixedStepper } from './loop';
 import { Renderer, type RenderState } from '../rendering/renderer';
@@ -18,6 +20,7 @@ import type { ScoreSnapshot } from '../systems/scoring';
 import type { SpawnTicket, GameEventType } from '../systems/spawner';
 
 export interface HudState {
+  count?:CountSnapshot;
   score: ScoreSnapshot;
   next: SpawnTicket;
   dangerRatio: number;
@@ -27,7 +30,7 @@ export interface HudState {
 export interface EngineCallbacks {
   onHud: (h: HudState) => void;
   onMessage: (m: GameMessage) => void;
-  onGameOver: (score: ScoreSnapshot, reason: GameOverReason) => void;
+  onGameOver: (score: ScoreSnapshot, reason: GameOverReason,count?:CountSnapshot) => void;
   onPauseChange: (paused: boolean) => void;
 }
 
@@ -35,6 +38,7 @@ export interface EngineDebugApi {
   clearRows:(rows:number[])=>number;
   views: () => { front: RenderState | null; oblique: RenderState | null; obliqueFrames: number; synchronized: boolean };
   state: () => {
+    count?:CountSnapshot;
     board:Readonly<BoardSpec>; status: string; paused: boolean; entities: number; active: string | null; activeState: string | null;
     q: number; score: ScoreSnapshot; danger: number; fps: number; steps: number; escaped: number;
     activeX: number | null; activeY: number | null; frames: number; audioPlayed: number; bgmPlaying: boolean;
@@ -44,6 +48,9 @@ export interface EngineDebugApi {
   triggerEvent: (type: GameEventType) => void;
   setTimeScale: (n: number) => void;
   occupancy: () => number[];
+  /** Physics fixtures, never exposed through player controls. */
+  bodies:()=>{id:number;individualId:number;kind:DeviceKind;x:number;y:number;angle:number;state:string}[];
+  setBody:(id:number,pose:{x?:number;y?:number;angle?:number;vx?:number;vy?:number;static?:boolean})=>void;
 }
 
 export class GameEngine {
@@ -68,9 +75,9 @@ export class GameEngine {
     private readonly cb: EngineCallbacks,
     readonly audio: AudioManager,
     private readonly seed?: number,
-    private readonly mode:GameMode='classic',
+    private readonly mode:PlayMode='classic',
   ) {
-    this.renderer = new Renderer(canvas,boardForMode(mode));
+    this.renderer = new Renderer(canvas,boardForMode(physicsMode(mode)));
     this.views = new FrameViews(this.renderer);
     this.sim = this.createSim();
     this.onVisibility = this.onVisibility.bind(this);
@@ -80,7 +87,8 @@ export class GameEngine {
 
   private createSim(): GameSim {
     this.overNotified = false;
-    return new GameSim(
+    const Sim=this.mode==='count'?CountSim:GameSim;
+    return new Sim(
       {
         onMessage: (m) => this.cb.onMessage(m),
         onSound: (n, i) => this.audio.play(n, i),
@@ -89,10 +97,10 @@ export class GameEngine {
           this.overNotified = true;
           this.audio.stopBgm();
           this.emitHud(true);
-          this.cb.onGameOver(this.sim.score(), reason);
+          this.cb.onGameOver(this.sim.score(), reason,this.sim instanceof CountSim?this.sim.count():undefined);
         },
       },
-      { seed: this.seed,mode:this.mode },
+      { seed: this.seed,mode:physicsMode(this.mode) },
     );
   }
 
@@ -141,10 +149,11 @@ export class GameEngine {
     const score = this.sim.score();
     const next = this.sim.nextTicket();
     const danger = this.sim.danger.ratio;
-    const key = `${Math.round(score.spent)}|${Math.round(score.fieldValue)}|${score.lines}|${score.level}|${next.kind}|${next.refurb}|${danger.toFixed(2)}|${this.paused}|${Math.floor(score.timeMs / 1000)}|${score.combo}`;
+    const count=this.sim instanceof CountSim?this.sim.count():undefined;
+    const key = `${Math.round(score.spent)}|${Math.round(score.fieldValue)}|${score.lines}|${score.level}|${next.kind}|${next.refurb}|${danger.toFixed(2)}|${this.paused}|${Math.floor(score.timeMs / 1000)}|${score.combo}|${count?JSON.stringify(count):''}`;
     if (!force && key === this.lastHudKey) return;
     this.lastHudKey = key;
-    this.cb.onHud({ score, next, dangerRatio: danger, paused: this.paused });
+    this.cb.onHud({ score, next, dangerRatio: danger, paused: this.paused,...(count?{count}:{}) });
   }
 
   // ------------------------------------------------------------------ 一時停止
@@ -237,6 +246,7 @@ export class GameEngine {
       state: () => {
         const a = this.sim.active;
         return {
+          ...(this.sim instanceof CountSim?{count:this.sim.count()}:{}),
           board:this.sim.board, status: this.sim.status,
           paused: this.paused,
           entities: this.sim.entities.size,
@@ -264,6 +274,15 @@ export class GameEngine {
         this.timeScale = Math.max(1, Math.min(8, Math.round(n)));
       },
       occupancy: () => Array.from(this.sim.occupancy()),
+      bodies:()=>[...this.sim.entities.values()].map(e=>({id:e.id,individualId:e.individualId,kind:e.kind,x:e.body.position.x,y:e.body.position.y,angle:e.body.angle,state:e.state})),
+      setBody:(id,pose)=>{
+        const e=this.sim.entities.get(id);if(!e)return;
+        const b=e.body;
+        if(pose.static!==undefined)Matter.Body.setStatic(b,pose.static);
+        Matter.Body.setPosition(b,{x:pose.x??b.position.x,y:pose.y??b.position.y});
+        if(pose.angle!==undefined)Matter.Body.setAngle(b,pose.angle);
+        Matter.Body.setVelocity(b,{x:pose.vx??b.velocity.x,y:pose.vy??b.velocity.y});Matter.Sleeping.set(b,false);
+      },
     };
   }
 

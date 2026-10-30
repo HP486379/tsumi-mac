@@ -4,7 +4,7 @@ import type { HudState } from '../game/engine/GameEngine';
 import { drawPreview } from '../game/rendering/renderer';
 import { deviceCells,type GameMode } from '../data/gameModes';
 
-export function Hud({ hud, onPause,mode='classic' }: { hud: HudState | null; onPause: () => void;mode?:GameMode }) {
+export function Hud({ hud, onPause,mode='classic',countBest }: { hud: HudState | null; onPause: () => void;mode?:GameMode;countBest?:number }) {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const nextKind = hud?.next.kind;
   const nextRefurb = hud?.next.refurb ?? false;
@@ -19,20 +19,20 @@ export function Hud({ hud, onPause,mode='classic' }: { hud: HudState | null; onP
   return (
     <section className="hud" data-testid="hud" aria-label="スコア">
       <div className="hud-item spent">
-        <span className="hud-label">散財総額</span>
-        <span className="hud-value" data-testid="hud-spent">{formatYen(s?.spent ?? 0)}</span>
+        <span className="hud-label">{countBest!==undefined?'現在積載台数':'散財総額'}</span>
+        <span className="hud-value" data-testid={countBest!==undefined?'count-current':'hud-spent'}>{countBest!==undefined?`${hud?.count?.current??0}台`:formatYen(s?.spent ?? 0)}</span>
       </div>
       <div className="hud-item index">
-        <span className="hud-label">積みMac指数</span>
-        <span className="hud-value" data-testid="hud-index">{formatYen(s?.fieldValue ?? 0)}</span>
+        <span className="hud-label">{countBest!==undefined?'今回の最高積載台数':'積みMac指数'}</span>
+        <span className="hud-value" data-testid={countBest!==undefined?'count-peak':'hud-index'}>{countBest!==undefined?`${hud?.count?.peak??0}台`:formatYen(s?.fieldValue ?? 0)}</span>
       </div>
       <div className="hud-item small lv">
-        <span className="hud-label">{mode==='real'?<span data-testid="game-mode">実寸540×900 / レベル</span>:'レベル'}</span>
-        <span className="hud-value" data-testid="hud-level">{s?.level ?? 1}</span>
+        <span className="hud-label">{countBest!==undefined?'歴代最高':mode==='real'?<span data-testid="game-mode">実寸540×900 / レベル</span>:'レベル'}</span>
+        <span className="hud-value" data-testid={countBest!==undefined?'count-best':'hud-level'}>{countBest!==undefined?`${countBest}台`:s?.level ?? 1}</span>
       </div>
       <div className="hud-item small lines">
-        <span className="hud-label">整理行数</span>
-        <span className="hud-value" data-testid="hud-lines">{s?.lines ?? 0}</span>
+        <span className="hud-label">{countBest!==undefined?'出現待機':'整理行数'}</span>
+        <span className="hud-value" data-testid={countBest!==undefined?'count-wait':'hud-lines'}>{countBest!==undefined?`${(hud?.count?.blockedSeconds??0).toFixed(1)} / 3秒`:s?.lines ?? 0}</span>
       </div>
       <div className="hud-item next">
         <span className="hud-label">NEXT</span>

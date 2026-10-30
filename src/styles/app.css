@@ -105,6 +105,9 @@ button { font: inherit; color: inherit; }
 .next-canvas { width: 56px; height: 36px; }
 .next-name { font-size: .6rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .pause-btn { min-height: 44px; min-width: 44px; padding: 0 10px; }
+.game-screen[data-mode="count"] .touch-group { gap:6px; }
+.game-screen[data-mode="count"] .touch-btn { width:44px; min-width:44px; height:48px; border-radius:12px; font-size:1.2rem; }
+.count-rules { color:var(--accent); font-size:.8rem; line-height:1.6; }
 .hud-item.lv .hud-value, .hud-item.lines .hud-value { font-size: .9rem; }
 
 .side-panel { display: none; }

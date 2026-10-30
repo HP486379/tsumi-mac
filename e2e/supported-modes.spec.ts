@@ -15,10 +15,10 @@ for(const mode of ['classic','real'] as const)test(`${mode} menu, controls and r
   for(const [key,value] of Object.entries(initial))localStorage.setItem(key,value);
   const get=Storage.prototype.getItem,events:{op:string;key:string}[]=[];
   window.__storageAudit={events,dump:()=>Object.fromEntries(Object.keys(localStorage).map(k=>[k,get.call(localStorage,k)]))};
-  for(const op of ['getItem','setItem','removeItem','clear'] as const){const original=Storage.prototype[op];Storage.prototype[op]=function(this:Storage,...args:unknown[]){if(this===localStorage)events.push({op,key:String(args[0]??'*')});return Reflect.apply(original,this,args);} as typeof original;}
+  for(const op of ['getItem','setItem','removeItem','clear'] as const){const original=Storage.prototype[op];Reflect.set(Storage.prototype,op,function(this:Storage,...args:unknown[]){if(this===localStorage)events.push({op,key:String(args[0]??'*')});return Reflect.apply(original,this,args);});}
  },initial);
  await page.goto('/?seed=20261029');
- await expect(page.locator('.menu button')).toHaveText(['積みはじめる','実寸モードで積む','遊び方']);
+ await expect(page.locator('.menu button')).toHaveText(['テトリスモード','実寸モード','最多積載台数チャレンジ','遊び方']);
  await page.screenshot({path:info.outputPath('title.png'),fullPage:true});
  await page.getByTestId(mode==='classic'?'start-button':'real-start-button').click();
  await expect(page.getByTestId('game-screen')).toHaveAttribute('data-mode',mode);
@@ -46,5 +46,5 @@ for(const mode of ['classic','real'] as const)test(`${mode} menu, controls and r
  expect(audit.events.some(e=>e.op==='setItem'&&e.key===selected)).toBe(true);
  expect(audit.events.some(e=>e.op==='removeItem'||e.op==='clear')).toBe(false);
  await writeFile(info.outputPath('storage-audit.json'),JSON.stringify(audit,null,2));
- await page.getByTestId('result-title').click();await expect(page.locator('.menu button')).toHaveCount(3);expect(errors).toEqual([]);
+ await page.getByTestId('result-title').click();await expect(page.locator('.menu button')).toHaveCount(4);expect(errors).toEqual([]);
 });

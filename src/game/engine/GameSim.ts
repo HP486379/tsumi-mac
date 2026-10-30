@@ -150,18 +150,18 @@ export class GameSim {
 
   private addEntity(
     kind: DeviceKind, refurb: boolean, cx: number, cy: number, wCells: number, hCells: number, angle: number,
-    state: DeviceEntity['state'], fragment = false, cutTop = false, cutBottom = false, geometry?:FragmentGeometry,
+    state: DeviceEntity['state'], fragment = false, cutTop = false, cutBottom = false, geometry?:FragmentGeometry,individualId=this.nextId,
   ): DeviceEntity {
     const body = createDeviceBody({ kind, cx, cy, wCells, hCells, angle, mode:this.mode,geometry });
     Composite.add(this.world.engine.world, body);
     const e: DeviceEntity = {
-      id: this.nextId++, kind, refurb, wCells, hCells, body, state, fragment, cutTop, cutBottom, geometry, lastVx: 0, lastVy: 0,
+      id: this.nextId++, individualId,kind, refurb, wCells, hCells, body, state, fragment, cutTop, cutBottom, geometry, lastVx: 0, lastVy: 0,
     };
     this.entities.set(e.id, e);
     return e;
   }
 
-  private removeEntityBody(e: DeviceEntity): void {
+  protected removeEntityBody(e: DeviceEntity): void {
     Composite.remove(this.world.engine.world, e.body);
     this.entities.delete(e.id);
     if (this.active === e) this.active = null;
@@ -178,7 +178,7 @@ export class GameSim {
   }
 
   // ------------------------------------------------------------------ 衝突チェック
-  private overlapsAny(poly: Polygon, except: DeviceEntity | null): boolean {
+  protected overlapsAny(poly: Polygon, except: DeviceEntity | null): boolean {
     const bb = polygonAABB(poly);
     for (const e of this.entities.values()) {
       if (e === except) continue;
@@ -334,10 +334,7 @@ export class GameSim {
 
     if (this.stepCount % ROW_CHECK_INTERVAL === 0) this.checkRows();
 
-    // 危険判定（操作対象は除外）
-    const tops: number[] = [];
-    for (const e of this.entities.values()) if (e.state === 'locked') tops.push(e.body.bounds.min.y);
-    if (this.danger.update(dt, tops)) this.gameOver('danger');
+    this.updateDanger(dt);
 
     this.updateEffects(dt);
 
@@ -355,6 +352,12 @@ export class GameSim {
     this.checkRows();
   }
 
+  protected updateDanger(dt:number):void {
+    const tops:number[]=[];
+    for(const e of this.entities.values())if(e.state==='locked')tops.push(e.body.bounds.min.y);
+    if(this.danger.update(dt,tops))this.gameOver('danger');
+  }
+
   private detectImpacts(): void {
     for (const e of this.entities.values()) {
       const v = e.body.velocity;
@@ -368,7 +371,7 @@ export class GameSim {
   }
 
   /** 万一の突き抜け対策：盤面外に出たボディを除去（正常なら発生しない） */
-  private cullEscaped(): void {
+  protected cullEscaped(): void {
     for (const e of [...this.entities.values()]) {
       const p = e.body.position;
       if (p.y > this.board.height + 120 || p.x < -120 || p.x > this.board.width + 120) {
@@ -415,7 +418,7 @@ export class GameSim {
       const frags: Array<{ id: number; value: number }> = [];
       for (const f of plan.create) {
         if (f.sourceId !== id) continue;
-        const ne = this.addEntity(f.kind, f.refurb, f.cx, f.cy, f.wCells, f.hCells, f.angle, 'locked', true, f.cutTop, f.cutBottom,'geometry' in f?f.geometry as FragmentGeometry:undefined);
+        const ne = this.addEntity(f.kind, f.refurb, f.cx, f.cy, f.wCells, f.hCells, f.angle, 'locked', true, f.cutTop, f.cutBottom,'geometry' in f?f.geometry as FragmentGeometry:undefined,src.individualId);
         Body.setVelocity(ne.body, { x: f.vx, y: f.vy });
         frags.push({ id: ne.id, value: f.value });
       }
@@ -467,7 +470,7 @@ export class GameSim {
     this.shake = this.shake > 0.2 ? this.shake * 0.88 : 0;
   }
 
-  private gameOver(reason: GameOverReason): void {
+  protected gameOver(reason: GameOverReason): void {
     if (this.status === 'over') return;
     this.status = 'over';
     this.overReason = reason;

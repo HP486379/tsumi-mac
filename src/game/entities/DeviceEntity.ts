@@ -8,6 +8,8 @@ export type EntityState = 'falling' | 'landing' | 'locked';
 export interface DeviceEntity {
   geometry?: FragmentGeometry;
   id: number;
+  /** Root purchase identity, retained by any future fragments. */
+  individualId: number;
   kind: DeviceKind;
   refurb: boolean;
   /** ボディのローカル寸法（セル数） */

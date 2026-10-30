@@ -7,10 +7,13 @@ import type { ScoreSnapshot } from '../game/systems/scoring';
 import type { Action } from '../game/systems/input';
 import { useStageSize } from '../hooks/useStageSize';
 import { Hud } from './Hud';
+import { CountHud } from './CountHud';
+import { CountSim,type CountSnapshot } from '../game/count/CountSim';
+import { saveCountPeak } from '../game/count/records';
 import { TouchControls } from './TouchControls';
 import { PauseOverlay } from './PauseOverlay';
 import { boardForMode,obliqueViewport } from '../game/board';
-import type { GameMode } from '../data/gameModes';
+import { physicsMode,type PlayMode } from '../data/playModes';
 
 declare global {
   interface Window {
@@ -19,11 +22,11 @@ declare global {
 }
 
 interface Props {
-  mode?:GameMode;
+  mode?:PlayMode;
   audio: AudioManager;
   settings: Settings;
   onSettings: (s: Settings) => void;
-  onGameOver: (s: ScoreSnapshot) => void;
+  onGameOver: (s: ScoreSnapshot,count?:CountSnapshot) => void;
   onTitle: () => void;
   seed?: number;
 }
@@ -42,7 +45,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [obliqueOpen, setObliqueOpen] = useState(() => window.matchMedia('(min-width: 1000px) and (min-height: 560px)').matches);
   const toastId = useRef(0);
-  const board=boardForMode(mode),view=obliqueViewport(board);
+  const board=boardForMode(physicsMode(mode)),view=obliqueViewport(board);
   const size = useStageSize(stageRef,board);
   const onGameOverRef = useRef(onGameOver);
   onGameOverRef.current = onGameOver;
@@ -65,9 +68,9 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
         onHud: setHud,
         onMessage: pushToast,
         onPauseChange: setPaused,
-        onGameOver: (score) => {
+        onGameOver: (score,_reason,count) => {
           setCollapse(true);
-          overTimer = window.setTimeout(() => onGameOverRef.current(score), 1600);
+          overTimer = window.setTimeout(() => onGameOverRef.current(score,count), 1600);
         },
       },
       audio,
@@ -137,10 +140,11 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
     engineRef.current?.press(a);
   }, [audio]);
   const release = useCallback((a: Action) => engineRef.current?.release(a), []);
+  const leave=()=>{const sim=engineRef.current?.sim;if(sim instanceof CountSim)saveCountPeak(sim.count().peak);onTitle();};
 
   return (
     <main className="game-screen" data-testid="game-screen" data-mode={mode}>
-      <Hud hud={hud} mode={mode} onPause={() => engineRef.current?.pause()} />
+      {mode==='count'?<CountHud hud={hud} onPause={()=>engineRef.current?.pause()}/>:<Hud hud={hud} mode={mode} onPause={() => engineRef.current?.pause()} />}
       <div className="stage" ref={stageRef}>
         <div className="canvas-wrap" style={{ width: size.width, height: size.height }}>
           <canvas
@@ -160,7 +164,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           </div>
           {collapse && (
             <div className="collapse-overlay" data-testid="collapse-overlay">
-              <span>積みMac崩壊</span>
+              <span>{mode==='count'?'積載チャレンジ終了':'積みMac崩壊'}</span>
             </div>
           )}
         </div>
@@ -176,12 +180,13 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           <div id="oblique-content">
             <div className="oblique-surface" style={{aspectRatio: `${view.width} / ${view.height}`}} ref={obliqueSurfaceRef}>
               <canvas ref={obliqueRef} className="oblique-canvas" data-testid="oblique-canvas" aria-label="正面と同期した斜めビュー（閲覧専用）" />
-              {collapse && <div className="oblique-status" data-testid="oblique-over">積みMac崩壊</div>}
+              {collapse && <div className="oblique-status" data-testid="oblique-over">{mode==='count'?'出現場所が塞がりました':'積みMac崩壊'}</div>}
             </div>
             <p className="oblique-note">同じ状態を別の角度から表示。接触位置・操作は正面ビューで確認してください。</p>
           </div>
         </details>
         <div className="operation-guide">
+        {mode==='count'&&<p className="count-rules">行消しなし。崩れても続行！ 赤線は終了条件ではありません。出現場所が3秒間塞がると終了します。</p>}
         <h3>操作</h3>
         <ul className="key-help">
           <li><kbd>←</kbd><kbd>→</kbd> 移動</li>
@@ -190,11 +195,11 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           <li><kbd>P</kbd>/<kbd>Esc</kbd> 一時停止</li>
         </ul>
         <p className="combo-line" data-testid="hud-combo">
-          コンボ {hud?.score.combo ?? 0} / 最大 {hud?.score.maxCombo ?? 0}
+          {mode==='count'?'固定されたMacを1台ずつ計測':<>コンボ {hud?.score.combo ?? 0} / 最大 {hud?.score.maxCombo ?? 0}</>}
         </p>
         </div>
       </aside>
-      <TouchControls onPress={press} onRelease={release} />
+      <TouchControls onPress={press} onRelease={release} hardDrop={mode==='count'} />
       {paused && !collapse && (
         <PauseOverlay
           settings={settings}
@@ -207,7 +212,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
             setPaused(false);
             engineRef.current?.restart();
           }}
-          onTitle={onTitle}
+          onTitle={leave}
         />
       )}
     </main>
