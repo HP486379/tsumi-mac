@@ -243,3 +243,8 @@ button { font: inherit; color: inherit; }
   .oblique-surface { height: min(42dvh, 170px); max-height: none; width: auto; }
   .oblique-note { font-size: .55rem; }
 }
+
+/* タッチ操作の微調整切替 */
+.touch-btn.fine-toggle { width:54px; min-width:54px; height:48px; border-radius:12px; font-size:.85rem; }
+.touch-btn.fine-toggle.active { border-color:var(--accent); background:#284461; color:#fff; }
+@media (max-width:480px) { .touch-group.cl { gap:5px; } .touch-group.cl .touch-btn { width:48px; height:48px; } .touch-group.cl .fine-toggle { width:46px; min-width:46px; font-size:.75rem; } }
