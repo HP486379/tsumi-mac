@@ -24,8 +24,8 @@ describe('classic mini model transfer and thin colliders',()=>{
   const ranges=state.items.map(p=>{const y=chassisMesh(p).map(v=>worldFromLocal(chassisPose(p),v.p)[1]);return {min:Math.min(...y),max:Math.max(...y)};}).sort((a,b)=>b.max-a.max);
   expect(Math.abs(ranges[0]!.max-648)).toBeLessThan(.2);for(let i=1;i<3;i++)expect(Math.abs(ranges[i]!.max-ranges[i-1]!.min)).toBeLessThan(.2);for(const b of bodies)expect(Math.abs(b.body.angle)).toBeLessThan(.01);ledger(s);s.destroy();
  });
- it.each(kinds)('%s keeps 4px movement, clamps the last fractional wall step and rotates safely',kind=>{
-  const s=sim();s.spawner.force(kind);const e=s.spawnNext()!;Matter.Body.setPosition(e.body,{x:e.body.position.x,y:250});const x=e.body.position.x;expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(x-4,8);
+ it.each(kinds)('%s keeps 1px fine movement, clamps the last fractional wall step and rotates safely',kind=>{
+  const s=sim();s.spawner.force(kind);const e=s.spawnNext()!;Matter.Body.setPosition(e.body,{x:e.body.position.x,y:250});const x=e.body.position.x;s.press('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(x-1,8);
   for(const dir of [-1,1] as const){for(let i=0;i<160;i++)s.tryMove(dir);for(let q=0;q<4;q++){expect(s.tryRotate(1)).toBe(true);expect(e.body.bounds.min.x).toBeGreaterThanOrEqual(-1e-8);expect(e.body.bounds.max.x).toBeLessThanOrEqual(360+1e-8);}}
   s.hardDrop();steps(s);expect(s.escaped).toBe(0);expect(Math.abs(Math.max(...e.body.vertices.map(v=>v.y))-648)).toBeLessThan(.2);s.destroy();
  });
