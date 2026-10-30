@@ -73,7 +73,7 @@ describe('物理挙動', () => {
     for (const dir of [-1, 1] as const) {
       const { sim } = newSim();
       const e = spawn(sim, 'studio');
-      for (let i = 0; i < 20; i++) sim.tryMove(dir);
+      for (let i = 0; i < 160; i++) sim.tryMove(dir);
       sim.hardDrop();
       runUntilLocked(sim);
       expect(e.body.bounds.min.x).toBeGreaterThan(-2);
@@ -89,7 +89,7 @@ describe('物理挙動', () => {
     const b = e.body.bounds;
     expect(b.max.x - b.min.x).toBeCloseTo(classicMiniSize('miniM1').h, 1);
     expect(b.max.y - b.min.y).toBeCloseTo(2 * CELL, 1);
-    for (let i = 0; i < 20; i++) sim.tryMove(1);
+    for (let i = 0; i < 160; i++) sim.tryMove(1);
     expect(e.body.bounds.max.x).toBeCloseTo(FIELD_W, 1);
     // 壁際で横向きに戻す → 左へキックされて盤面内に収まる
     expect(sim.tryRotate(1)).toBe(true);
@@ -228,7 +228,7 @@ describe('行消去（物理と論理グリッドの統合）', () => {
     for (let c = 0; c < 8; c += 2) sim.placeLocked('miniM4', c, 17);
     steps(sim, 30);
     const e = spawn(sim, 'miniM4');
-    for (let i = 0; i < 10; i++) sim.tryMove(1);
+    for (let i = 0; i < 160; i++) sim.tryMove(1);
     expect(e.body.bounds.max.x).toBeCloseTo(FIELD_W, 1);
     sim.hardDrop();
     runUntilLocked(sim);

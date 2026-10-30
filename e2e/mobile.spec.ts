@@ -20,7 +20,7 @@ test.describe('スマートフォン（タッチ）', () => {
 
     const x0 = (await state(page)).activeX!;
     await page.getByTestId('touch-left').tap();
-    await expect.poll(async () => x0 - (await state(page)).activeX!).toBeCloseTo(36, 0);
+    await expect.poll(async () => x0 - (await state(page)).activeX!).toBeCloseTo(4, 5);
     await page.getByTestId('touch-right').tap();
     await expect.poll(async () => (await state(page)).activeX!).toBeCloseTo(x0, 0);
     const q0 = (await state(page)).q;

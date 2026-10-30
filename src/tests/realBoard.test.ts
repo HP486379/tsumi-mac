@@ -22,7 +22,7 @@ describe('540×900 real board',()=>{
  it.each(DEVICE_KINDS)('%s spawns at the new center, traverses both walls and rotates all quadrants',kind=>{
   const s=make();s.spawner.force(kind);const e=s.spawnNext()!;expect(e.body.position.x).toBe(270);
   Matter.Body.setPosition(e.body,{x:270,y:400});
-  for(const dir of [-1,1] as const){for(let i=0;i<30;i++)s.tryMove(dir);
+  for(const dir of [-1,1] as const){for(let i=0;i<200;i++)s.tryMove(dir);
    expect(dir<0?e.body.bounds.min.x:e.body.bounds.max.x).toBeCloseTo(dir<0?0:540,6);
    for(let i=0;i<4;i++){expect(s.tryRotate(1)).toBe(true);expect(e.body.bounds.min.x).toBeGreaterThanOrEqual(-1e-6);expect(e.body.bounds.max.x).toBeLessThanOrEqual(540+1e-6);}
   }

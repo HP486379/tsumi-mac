@@ -1,0 +1,698 @@
+[
+  {
+    "label": "classic-desktop-webgl",
+    "mode": "classic",
+    "software": false,
+    "isMobile": false,
+    "x0": 180,
+    "held": 160,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000018,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001750777,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235255025567,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.02352550255670849,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.00303913486414,
+      "y": 468.00997581264414,
+      "angle": 1.5708803631040236,
+      "bottom": 504.00997581264414
+    },
+    "errors": []
+  },
+  {
+    "label": "classic-mobile-webgl",
+    "mode": "classic",
+    "software": false,
+    "isMobile": true,
+    "x0": 180,
+    "held": 156,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188.00000000000017,
+        "y": 612.0125000000016,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.421319796954492,
+        "rightClearance": 2.421319796954144,
+        "floorError": 0.01250000000163709,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235278707379,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023527870737893863,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.0034367531058,
+      "y": 468.00999034708855,
+      "angle": 1.5707631619259192,
+      "bottom": 504.00999034708855
+    },
+    "errors": []
+  },
+  {
+    "label": "classic-desktop-canvas",
+    "mode": "classic",
+    "software": true,
+    "isMobile": false,
+    "x0": 180,
+    "held": 160,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000011,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001068656,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235255025561,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502556140054,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.00343675310577,
+      "y": 468.0099903470882,
+      "angle": 1.5707631619259161,
+      "bottom": 504.0099903470882
+    },
+    "errors": []
+  },
+  {
+    "label": "classic-mobile-canvas",
+    "mode": "classic",
+    "software": true,
+    "isMobile": true,
+    "x0": 180,
+    "held": 156,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000018,
+        "angle": 1.5707963267948999,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001750777,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.023525502556,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502556026368,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.0034367531064,
+      "y": 468.0099903470885,
+      "angle": 1.5707631619259264,
+      "bottom": 504.0099903470885
+    },
+    "errors": []
+  },
+  {
+    "label": "count-desktop-canvas",
+    "mode": "count",
+    "software": true,
+    "isMobile": false,
+    "x0": 180,
+    "held": 156,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000011,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001068656,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0244628200359,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.024462820035864752,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.00086235678984,
+      "y": 468.00999370667296,
+      "angle": 1.5708181098859817,
+      "bottom": 504.00999370667296
+    },
+    "errors": []
+  },
+  {
+    "label": "count-mobile-canvas",
+    "mode": "count",
+    "software": true,
+    "isMobile": true,
+    "x0": 180,
+    "held": 160,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000044,
+        "angle": 1.5707963267948999,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000004365575,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235255025586,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502558641165,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.00343675310597,
+      "y": 468.0099903470883,
+      "angle": 1.570763161925923,
+      "bottom": 504.0099903470883
+    },
+    "errors": []
+  },
+  {
+    "label": "count-desktop-webgl",
+    "mode": "count",
+    "software": false,
+    "isMobile": false,
+    "x0": 180,
+    "held": 160,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000018,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001750777,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235255025567,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.02352550255670849,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 188.00343675310646,
+      "y": 468.0099903470886,
+      "angle": 1.570763161925915,
+      "bottom": 504.0099903470886
+    },
+    "errors": []
+  },
+  {
+    "label": "count-mobile-webgl",
+    "mode": "count",
+    "software": false,
+    "isMobile": true,
+    "x0": 180,
+    "held": 160,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 612.0125000000014,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001409717,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 179,
+          "R": 197,
+          "width": 18,
+          "top": 504,
+          "floor": 648
+        },
+        "x": 188,
+        "y": 540.0235255025564,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502556367428,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 182,
+      "R": 194,
+      "width": 12,
+      "top": 504,
+      "floor": 648,
+      "x": 187.99877079951995,
+      "y": 468.00999108006675,
+      "angle": 1.5707654326181515,
+      "bottom": 504.00999108006675
+    },
+    "errors": []
+  },
+  {
+    "label": "real-desktop-canvas",
+    "mode": "real",
+    "software": true,
+    "isMobile": false,
+    "x0": 270,
+    "held": 250,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 864.0125000000018,
+        "angle": 1.5707963267948999,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001750777,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 792.0235255025568,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502556822175,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 272,
+      "R": 284,
+      "width": 12,
+      "top": 706.6598984771574,
+      "floor": 900,
+      "x": 278.0034367531055,
+      "y": 677.6698888242418,
+      "angle": 1.5707631619257159,
+      "bottom": 713.6698888242418
+    },
+    "errors": []
+  },
+  {
+    "label": "real-mobile-canvas",
+    "mode": "real",
+    "software": true,
+    "isMobile": true,
+    "x0": 270,
+    "held": 250,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 864.0125000000044,
+        "angle": 1.5707963267948999,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000004365575,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 792.0235255025594,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502559436973,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 272,
+      "R": 284,
+      "width": 12,
+      "top": 706.6598984771574,
+      "floor": 900,
+      "x": 278.0034385507983,
+      "y": 677.6698888242144,
+      "angle": 1.5707631619336728,
+      "bottom": 713.6698888242144
+    },
+    "errors": []
+  },
+  {
+    "label": "real-desktop-webgl",
+    "mode": "real",
+    "software": false,
+    "isMobile": false,
+    "x0": 270,
+    "held": 250,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 864.0125000000019,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.012500000001864464,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 792.0235255025568,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.023525502556822175,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 272,
+      "R": 284,
+      "width": 12,
+      "top": 706.6598984771574,
+      "floor": 900,
+      "x": 278.0034788500276,
+      "y": 677.6698737998707,
+      "angle": 1.5708821308549201,
+      "bottom": 713.6698737998707
+    },
+    "errors": []
+  },
+  {
+    "label": "real-mobile-webgl",
+    "mode": "real",
+    "software": false,
+    "isMobile": true,
+    "x0": 270,
+    "held": 250,
+    "measurements": [
+      {
+        "kind": "miniM2",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 864.0125000000016,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.01250000000163709,
+        "synchronized": true
+      },
+      {
+        "kind": "miniM1",
+        "channel": {
+          "L": 269,
+          "R": 287,
+          "width": 18,
+          "top": 706.6598984771574,
+          "floor": 900
+        },
+        "x": 278,
+        "y": 792.024462820037,
+        "angle": 1.5707963267948966,
+        "width": 13.157360406091371,
+        "leftClearance": 2.4213197969543216,
+        "rightClearance": 2.4213197969543145,
+        "floorError": 0.02446282003700162,
+        "synchronized": true
+      }
+    ],
+    "narrow": {
+      "L": 272,
+      "R": 284,
+      "width": 12,
+      "top": 706.6598984771574,
+      "floor": 900,
+      "x": 277.9986194588556,
+      "y": 677.6698883557843,
+      "angle": 1.570761262259821,
+      "bottom": 713.6698883557843
+    },
+    "errors": []
+  }
+]

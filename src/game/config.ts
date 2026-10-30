@@ -39,8 +39,10 @@ export const LINES_PER_LEVEL = 5;
 export const MAX_LEVEL = 15;
 
 /** 横移動のオートリピート（ms） */
+export const MOVE_STEP_PX = 4;
 export const DAS_MS = 170;
-export const ARR_MS = 60;
+/** 60Hzでは約33msごとに4px。細かさを保ちつつ長押しで盤面を横断できる。 */
+export const ARR_MS = 25;
 
 /** 壁の厚み（トンネリング防止のため厚くする） */
 export const WALL_THICKNESS = 240;

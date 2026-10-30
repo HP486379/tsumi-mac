@@ -6,7 +6,7 @@
 import Matter from 'matter-js';
 import {
   ARR_MS, BASE_FALL_SPEED, CELL, DAS_MS, FALL_SPEED_PER_LEVEL,
-  HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,
+  HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,MOVE_STEP_PX,
 } from '../config';
 import { boardForMode,type BoardSpec } from '../board';
 import { BIG_SPEND_THRESHOLD, DEVICES, formatYen, type DeviceKind } from '../../data/devices';
@@ -178,15 +178,15 @@ export class GameSim {
   }
 
   // ------------------------------------------------------------------ 衝突チェック
-  protected overlapsAny(poly: Polygon, except: DeviceEntity | null): boolean {
+  protected overlapsAny(poly: Polygon, except: DeviceEntity | null,tolerance=OVERLAP_TOL): boolean {
     const bb = polygonAABB(poly);
     for (const e of this.entities.values()) {
       if (e === except) continue;
       const b = e.body.bounds;
-      if (b.max.x <= bb.minX + OVERLAP_TOL || b.min.x >= bb.maxX - OVERLAP_TOL) continue;
-      if (b.max.y <= bb.minY + OVERLAP_TOL || b.min.y >= bb.maxY - OVERLAP_TOL) continue;
+      if (b.max.x <= bb.minX + tolerance || b.min.x >= bb.maxX - tolerance) continue;
+      if (b.max.y <= bb.minY + tolerance || b.min.y >= bb.maxY - tolerance) continue;
       const shapes=this.mode==='real'&&e.body.parts.length>1?e.body.parts.slice(1):[e.body];
-      if (shapes.some(shape=>convexOverlap(poly, shape.vertices, OVERLAP_TOL))) return true;
+      if (shapes.some(shape=>convexOverlap(poly, shape.vertices, tolerance))) return true;
     }
     return false;
   }
@@ -207,13 +207,13 @@ export class GameSim {
   tryMove(dir: -1 | 1): boolean {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
-    const { W } = this.worldDims(e, this.q);
-    const candidate = Math.round((this.targetX - (W * CELL) / 2) / CELL) * CELL + dir * CELL;
-    const left = this.mode==='real'||isClassicMini(e.kind)?Math.max(0,Math.min(this.board.width-W*CELL,candidate)):candidate;
-    if (left < -0.5 || left + W * CELL > this.board.width + 0.5) return false;
-    const nx = left + (W * CELL) / 2;
-    const poly = rectVertices(nx, e.body.position.y, e.wCells * CELL, e.hCells * CELL, this.q * HALF_PI);
-    if (this.overlapsAny(poly, e)) return false;
+    const { W,H } = this.worldDims(e, this.q),x=e.body.position.x;
+    const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+dir*MOVE_STEP_PX));
+    if(Math.abs(nx-x)<1e-9)return false;
+    // Test the entire translation, not only its endpoint: even a sub-4px
+    // fragment must block movement. Input admits no positive penetration.
+    const swept=rectVertices((x+nx)/2,e.body.position.y,W*CELL+Math.abs(nx-x),H*CELL,0);
+    if (this.overlapsAny(swept, e,0)) return false;
     Body.setPosition(e.body, { x: nx, y: e.body.position.y });
     this.targetX = nx;
     this.cb.onSound?.('move', 1);
@@ -225,16 +225,19 @@ export class GameSim {
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const nq = (this.q + dir + 4) % 4;
     const { W } = this.worldDims(e, nq);
-    const continuous=this.mode==='real'||isClassicMini(e.kind);
-    const baseLeft = continuous?e.body.position.x-(W*CELL)/2:Math.round((e.body.position.x - (W * CELL) / 2) / CELL) * CELL;
-    const y = e.body.position.y;
-    for (const dy of [0, -CELL / 2, -CELL]) {
-      for (const kick of [0, -1, 1, -2, 2]) {
-        const left = baseLeft + kick * CELL;
-        if (!continuous && (left < -0.5 || left + W * CELL > this.board.width + 0.5)) continue;
-        const nx = continuous?Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,left+W*CELL/2)):left + (W * CELL) / 2;
+    const x=e.body.position.x,y=e.body.position.y,old=this.worldDims(e,this.q);
+    const kicks=[0];for(let d=MOVE_STEP_PX;d<=CELL*2;d+=MOVE_STEP_PX)kicks.push(-d,d);
+    for (let dy=0;dy>=-CELL;dy-=MOVE_STEP_PX) {
+      for (const kick of kicks) {
+        const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+kick));
         const poly = rectVertices(nx, y + dy, e.wCells * CELL, e.hCells * CELL, nq * HALF_PI);
-        if (this.overlapsAny(poly, e)) continue;
+        if (this.overlapsAny(poly, e,0)) continue;
+        // Kicks cannot teleport the existing body across another Mac. This
+        // conservative swept rectangle also protects diagonal corrections.
+        if(Math.abs(nx-x)>1e-9||dy!==0){
+          const sweep=rectVertices((x+nx)/2,y+dy/2,old.W*CELL+Math.abs(nx-x),old.H*CELL+Math.abs(dy),0);
+          if(this.overlapsAny(sweep,e,0))continue;
+        }
         this.q = nq;
         Body.setAngle(e.body, nq * HALF_PI);
         Body.setAngularVelocity(e.body, 0);
@@ -250,6 +253,19 @@ export class GameSim {
 
   hardDrop(): void {
     if (this.active && this.active.state === 'falling') this.hardDropping = true;
+  }
+
+  /** Active downward input is swept too. A fast step into a gap narrower
+   * than the collider can otherwise produce opposing side contacts whose
+   * Matter corrections cancel. Stop at first contact, without shrinking a
+   * body or changing Matter's solver/tolerances. Free bodies stay physical. */
+  private safeFallSpeed(e:DeviceEntity,speed:number):number {
+    const {W,H}=this.worldDims(e,this.q),x=e.body.position.x,y=e.body.position.y;
+    const blocked=(d:number)=>this.overlapsAny(rectVertices(x,y+d/2,W*CELL,H*CELL+d,0),e,0);
+    if(!blocked(speed+.5))return speed;
+    let lo=0,hi=speed+.5;
+    for(let i=0;i<24;i++){const mid=(lo+hi)/2;if(blocked(mid))hi=mid;else lo=mid;}
+    return Math.min(speed,Math.max(0,lo-.05));
   }
 
   private processInput(): void {
@@ -300,7 +316,7 @@ export class GameSim {
         Body.setAngle(a.body, this.q * HALF_PI);
         Body.setAngularVelocity(a.body, 0);
         const vx = Math.max(-3, Math.min(3, (this.targetX - a.body.position.x) * 0.3));
-        Body.setVelocity(a.body, { x: vx, y: speed });
+        Body.setVelocity(a.body, { x: vx, y: this.safeFallSpeed(a,speed) });
         this.prevY = a.body.position.y;
         expected = speed;
       }

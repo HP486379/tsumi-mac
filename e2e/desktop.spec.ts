@@ -15,7 +15,7 @@ test.describe('PC（キーボード）', () => {
 
     const x0 = (await state(page)).activeX!;
     await page.keyboard.press('ArrowLeft');
-    await expect.poll(async () => x0 - (await state(page)).activeX!).toBeCloseTo(36, 0);
+    await expect.poll(async () => x0 - (await state(page)).activeX!).toBeCloseTo(4, 5);
     await page.keyboard.press('ArrowRight');
     await expect.poll(async () => (await state(page)).activeX!).toBeCloseTo(x0, 0);
 

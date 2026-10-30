@@ -33,7 +33,7 @@ test('dual view uses the same live frame through movement, rotation, clearing an
   await page.getByTestId('resume-button').click();
   const x = (await state(page)).activeX!;
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(36, 0);
+  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(4, 5);
   await checkSync();
   const q = (await state(page)).q;
   await page.keyboard.press('KeyX');
@@ -82,7 +82,7 @@ test('mobile folds the auxiliary view and keeps touch controls usable in both or
   }
   const x = (await state(page)).activeX!;
   await page.getByTestId('touch-left').tap();
-  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(36, 0);
+  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(4, 5);
   await toggle.tap();
   await expect.poll(() => page.evaluate(() => window.__tsumimac!.views().oblique)).toBeNull();
   await page.getByTestId('touch-pause').tap();

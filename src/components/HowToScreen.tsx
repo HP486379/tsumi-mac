@@ -30,7 +30,7 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
         <h3>操作</h3>
         <table className="keys">
           <tbody>
-            <tr><th>← →</th><td>左右移動</td></tr>
+            <tr><th>← →</th><td>左右4px移動（長押しで連続）</td></tr>
             <tr><th>↑ / X</th><td>右回転</td></tr>
             <tr><th>Z</th><td>左回転</td></tr>
             <tr><th>↓</th><td>高速落下</td></tr>
