@@ -6,7 +6,7 @@
 import Matter from 'matter-js';
 import {
   ARR_MS, BASE_FALL_SPEED, CELL, DAS_MS, FALL_SPEED_PER_LEVEL,
-  HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,MOVE_STEP_PX,
+  HARD_DROP_SPEED, MAX_FALL_SPEED, ROW_CHECK_INTERVAL, SOFT_DROP_SPEED, STEP_MS,MOVE_STEP_PX,FINE_MOVE_STEP_PX,FINE_ARR_MS,
 } from '../config';
 import { boardForMode,type BoardSpec } from '../board';
 import { BIG_SPEND_THRESHOLD, DEVICES, formatYen, type DeviceKind } from '../../data/devices';
@@ -208,7 +208,8 @@ export class GameSim {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W,H } = this.worldDims(e, this.q),x=e.body.position.x;
-    const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+dir*MOVE_STEP_PX));
+    const step=this.input.held.has('fine')?FINE_MOVE_STEP_PX:MOVE_STEP_PX;
+    const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+dir*step));
     if(Math.abs(nx-x)<1e-9)return false;
     // Test the entire translation, not only its endpoint: even a sub-4px
     // fragment must block movement. Input admits no positive penetration.
@@ -226,8 +227,9 @@ export class GameSim {
     const nq = (this.q + dir + 4) % 4;
     const { W } = this.worldDims(e, nq);
     const x=e.body.position.x,y=e.body.position.y,old=this.worldDims(e,this.q);
-    const kicks=[0];for(let d=MOVE_STEP_PX;d<=CELL*2;d+=MOVE_STEP_PX)kicks.push(-d,d);
-    for (let dy=0;dy>=-CELL;dy-=MOVE_STEP_PX) {
+    // 回転キックは細かい位置調整を維持し、36px移動量とは独立させる。
+    const kicks=[0];for(let d=FINE_MOVE_STEP_PX;d<=CELL*2;d+=FINE_MOVE_STEP_PX)kicks.push(-d,d);
+    for (let dy=0;dy>=-CELL;dy-=4) {
       for (const kick of kicks) {
         const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+kick));
         const poly = rectVertices(nx, y + dy, e.wCells * CELL, e.hCells * CELL, nq * HALF_PI);
@@ -283,7 +285,7 @@ export class GameSim {
     }
     if (inp.repeatDir && inp.held.has(inp.repeatDir)) {
       inp.repeatTimer += STEP_MS;
-      const threshold = inp.repeating ? ARR_MS : DAS_MS;
+      const threshold = inp.repeating ? (inp.held.has('fine')?FINE_ARR_MS:ARR_MS) : DAS_MS;
       if (inp.repeatTimer >= threshold) {
         inp.repeatTimer = 0;
         inp.repeating = true;
