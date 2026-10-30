@@ -23,7 +23,7 @@ describe.each(modes)('%s fine placement',mode=>{
  });
  it('holds and releases with the same repeat timing, clamps the last fractional wall step',()=>{
   const s=sim(mode),e=spawn(s,'miniM1'),x=e.body.position.x;s.press('fine');s.press('left');steps(s,18);s.release('left');const end=e.body.position.x;expect(x-end).toBeGreaterThanOrEqual(2);expect(x-end).toBeCloseTo(Math.round(x-end),7);steps(s,10);expect(e.body.position.x).toBeCloseTo(end,7);
-  expect(s.tryRotate(1)).toBe(true);for(let i=0;i<200;i++)s.tryMove(-1);expect(Math.min(...e.body.vertices.map(v=>v.x))).toBeCloseTo(0,8);expect(s.tryMove(-1)).toBe(false);expect(s.tryRotate(1)).toBe(true);expect(Math.min(...e.body.vertices.map(v=>v.x))).toBeGreaterThanOrEqual(-1e-8);s.destroy();
+  expect(s.tryRotate(1)).toBe(true);for(let i=0;i<Math.ceil(s.board.width/FINE_MOVE_STEP_PX)+10;i++)s.tryMove(-1);expect(Math.min(...e.body.vertices.map(v=>v.x))).toBeCloseTo(0,8);expect(s.tryMove(-1)).toBe(false);expect(s.tryRotate(1)).toBe(true);expect(Math.min(...e.body.vertices.map(v=>v.x))).toBeGreaterThanOrEqual(-1e-8);s.destroy();
  });
  it.each(['miniM1','miniM2'] as const)('%s fits the measured 18px channel and settles vertically without interpenetration',kind=>{
   const s=sim(mode),walls=channel(s,18),e=spawn(s,kind);expect(s.tryRotate(1)).toBe(true);const target=mode==='real'?214:212;
