@@ -39,10 +39,13 @@ export const LINES_PER_LEVEL = 5;
 export const MAX_LEVEL = 15;
 
 /** 横移動のオートリピート（ms） */
-export const MOVE_STEP_PX = 4;
+export const MOVE_STEP_PX = 36;
+/** Shift またはタッチ微調整中の横移動量 */
+export const FINE_MOVE_STEP_PX = 1;
+export const FINE_ARR_MS = 55;
 export const DAS_MS = 170;
-/** 60Hzでは約33msごとに4px。細かさを保ちつつ長押しで盤面を横断できる。 */
-export const ARR_MS = 25;
+/** 通常は36pxの高速移動。微調整時は独立したリピート速度を使用。 */
+export const ARR_MS = 75;
 
 /** 壁の厚み（トンネリング防止のため厚くする） */
 export const WALL_THICKNESS = 240;
