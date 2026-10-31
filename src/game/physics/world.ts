@@ -24,7 +24,7 @@ export function createPhysicsWorld(board:Readonly<BoardSpec>=CLASSIC_BOARD): Phy
   engine.constraintIterations = 2;
 
   const t = WALL_THICKNESS;
-  const wallOpts = { isStatic: true, friction: 0.4, frictionStatic: 0.6, restitution: 0, label: 'wall' };
+  const wallOpts = { isStatic: true, friction: 0.32, frictionStatic: 0.5, restitution: 0, label: 'wall' };
   const floor = Bodies.rectangle(board.width / 2, board.height + t / 2, board.width + t * 2, t, { ...wallOpts, label: 'floor' });
   // 左右の壁は上方向に十分高くし、跳ね上がったボディも外に出ないようにする
   const wallH = board.height * 3;
@@ -60,9 +60,10 @@ export function macPro2013ChamferRadius(wCells: number, hCells: number): number 
 export function createDeviceBody(o: DeviceBodyOptions): Matter.Body {
   const spec = DEVICES[o.kind];
   const options = {
-    friction: spec.friction,
-    frictionStatic: spec.frictionStatic,
-    frictionAir: 0.004,
+    // 着地後の横滑りを少し強める。機種間の摩擦の大小関係は維持する。
+    friction: spec.friction * 0.8,
+    frictionStatic: spec.frictionStatic * 0.8,
+    frictionAir: 0.003,
     restitution: spec.restitution,
     slop: 0.04,
     ...(o.kind === 'macPro2013'&&!o.geometry ? { chamfer: { radius: o.mode==='real'?Math.min(o.wCells*CELL*.024,o.hCells*CELL*.15):macPro2013ChamferRadius(o.wCells, o.hCells) } } : {}),
