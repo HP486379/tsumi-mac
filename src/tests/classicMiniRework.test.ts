@@ -29,16 +29,24 @@ describe('classic mini model transfer and thin colliders',()=>{
   for(const dir of [-1,1] as const){for(let i=0;i<160;i++)s.tryMove(dir);for(let q=0;q<4;q++){expect(s.tryRotate(1)).toBe(true);expect(e.body.bounds.min.x).toBeGreaterThanOrEqual(-1e-8);expect(e.body.bounds.max.x).toBeLessThanOrEqual(360+1e-8);}}
   s.hardDrop();steps(s);expect(s.escaped).toBe(0);expect(Math.abs(Math.max(...e.body.vertices.map(v=>v.y))-648)).toBeLessThan(.2);s.destroy();
  });
- it('two thin layers do not fill a 36px row, and three layers do',()=>{
-  const s=sim(),h=classicMiniSize('miniM1').h;for(let layer=0;layer<2;layer++)for(let col=0;col<10;col+=2)s.placeLocked('miniM1',col,(648-(layer+1)*h)/36);
-  expect(s.checkRows()).toBe(0);for(let col=0;col<10;col+=2)s.placeLocked('miniM1',col,(648-3*h)/36);expect(s.checkRows()).toBe(1);expect(s.entities.size).toBe(5);expect([...s.entities.values()].every(e=>e.fragment&&e.geometry)).toBe(true);ledger(s);s.destroy();
- });
- it('preserves fractional remnants, their value and proportional mass after settling',()=>{
-  const s=sim(),h=classicMiniSize('miniM2').h;for(let layer=0;layer<3;layer++)for(let col=0;col<10;col+=2)s.placeLocked('miniM2',col,(648-(layer+1)*h)/36);
-  s.checkRows();const remaining=3*h-36;expect(s.score().spent).toBe(15*70000);expect(s.score().fieldValue).toBeCloseTo(5*70000*remaining/h,4);
-  for(const e of s.entities.values()){expect(e.hCells*36).toBeCloseTo(remaining,8);expect(e.body.mass).toBeCloseTo(1.3*remaining/h,8);}
-  steps(s);expect(s.escaped).toBe(0);for(const e of s.entities.values())expect(Math.abs(Math.max(...e.body.vertices.map(v=>v.y))-648)).toBeLessThan(.2);ledger(s);s.destroy();
- });
+ it('clears a continuous full-width thin Mac mini layer without requiring 36px height',()=>{
+   const s=sim(),h=classicMiniSize('miniM1').h;
+   for(let col=0;col<10;col+=2)s.placeLocked('miniM1',col,(648-h)/36);
+   expect(s.checkRows()).toBe(1);
+   expect(s.entities.size).toBe(0);
+   expect(s.score().cleared).toBe(5*50000);
+   ledger(s);s.destroy();
+  });
+  it('preserves purchase, cleared and remaining value when multiple thin layers span row boundaries',()=>{
+   const s=sim(),h=classicMiniSize('miniM2').h;
+   for(let layer=0;layer<3;layer++)for(let col=0;col<10;col+=2)s.placeLocked('miniM2',col,(648-(layer+1)*h)/36);
+   expect(s.checkRows()).toBe(2);
+   expect(s.score().spent).toBe(15*70000);
+   expect(s.score().cleared).toBeCloseTo(s.score().spent,4);
+   expect(s.score().fieldValue).toBeCloseTo(0,4);
+   expect(s.entities.size).toBe(0);
+   ledger(s);s.destroy();
+  });
  it('the transferred two-column M4 needs five units for one full-width row',()=>{
   const s=sim();for(let col=0;col<10;col+=2)s.placeLocked('miniM4',col,17);expect(s.checkRows()).toBe(1);expect(s.entities.size).toBe(0);expect(s.score().cleared).toBe(575000);ledger(s);s.destroy();
  });
