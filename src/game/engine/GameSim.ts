@@ -15,7 +15,7 @@ import { planRealRowClear } from '../grid/realRowClear';
 import type { DeviceEntity } from '../entities/DeviceEntity';
 import { createDeviceBody, createPhysicsWorld, type PhysicsWorld } from '../physics/world';
 import { convexOverlap, polygonAABB, rectVertices, type Polygon } from '../physics/geometry';
-import { computeOccupancy, findFullRows } from '../grid/occupancy';
+import { computeOccupancy, findFullRows, findContinuousStripRows } from '../grid/occupancy';
 import { type PieceState } from '../grid/rowClear';
 import { planClassicRowClear } from '../grid/classicRowClear';
 import { ScoreLedger, type ScoreSnapshot } from '../systems/scoring';
@@ -412,10 +412,21 @@ export class GameSim {
     return computeOccupancy(polys,this.board);
   }
 
+  private detectFullRows(): number[] {
+    const areaRows = findFullRows(this.occupancy(), this.board);
+    if (this.mode !== 'classic') return areaRows;
+    const polys: Polygon[] = [];
+    for (const e of this.entities.values()) {
+      if (e.state === 'locked' && e.body.speed <= ROW_CHECK_MAX_SPEED)
+        polys.push(e.body.vertices);
+    }
+    return [...new Set([...areaRows, ...findContinuousStripRows(polys, this.board)])].sort((a,b)=>a-b);
+  }
+
   /** 揃った行を検出して整理する。消去した行数を返す */
   checkRows(forcedRows?:number[]): number {
     if (this.status !== 'running') return 0;
-    const rows = forcedRows??findFullRows(this.occupancy(),this.board);
+    const rows = forcedRows??this.detectFullRows();
     if (rows.length === 0) return 0;
 
     const pieces: (PieceState & {geometry?:FragmentGeometry;vertices?:Polygon;polygons?:Polygon[]})[] = [];
