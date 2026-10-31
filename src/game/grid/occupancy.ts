@@ -115,3 +115,53 @@ export function findFullRows(occ: Float32Array, grid: GridSpec = DEFAULT_GRID, t
   }
   return out;
 }
+
+
+/**
+ * Classic mode: a continuous horizontal strip also completes a row.
+ * Thin Mac minis cannot fill 90% of a 36px-tall cell even when their
+ * entire width is covered. Require an actual shared horizontal slice;
+ * independent silhouettes at different heights must not be combined.
+ */
+export function findContinuousStripRows(polygons: Polygon[], grid: GridSpec = DEFAULT_GRID): number[] {
+  const result: number[] = [];
+  const width = grid.cols * grid.cell;
+  const minThickness = 2;
+  const gapTolerance = 0.75;
+  for (let row = 0; row < grid.rows; row++) {
+    const top = row * grid.cell, bottom = top + grid.cell;
+    const relevant = polygons.filter(p => {
+      const b = polygonAABB(p);
+      return b.maxY > top + minThickness && b.minY < bottom - minThickness;
+    });
+    if (!relevant.length) continue;
+    const levels = [top, bottom, ...relevant.flatMap(p => p.map(v => v.y).filter(y => y > top && y < bottom))]
+      .sort((a,b) => a-b);
+    const unique = levels.filter((y,i) => i===0 || y-levels[i-1]! > 1e-7);
+    let full = false;
+    for (let i=1; i<unique.length && !full; i++) {
+      const low=unique[i-1]!, high=unique[i]!;
+      if (high-low < minThickness) continue;
+      const y=(low+high)/2;
+      const spans: Array<[number,number]> = [];
+      for (const p of relevant) {
+        const xs:number[]=[];
+        for(let j=0;j<p.length;j++){
+          const a=p[j]!,b=p[(j+1)%p.length]!;
+          if ((a.y<=y && b.y>y)||(b.y<=y && a.y>y))
+            xs.push(a.x+(y-a.y)*(b.x-a.x)/(b.y-a.y));
+        }
+        if(xs.length>=2)spans.push([Math.max(0,Math.min(...xs)),Math.min(width,Math.max(...xs))]);
+      }
+      spans.sort((a,b)=>a[0]-b[0]);
+      let reach=0;
+      for(const [start,end] of spans){
+        if(start>reach+gapTolerance)break;
+        reach=Math.max(reach,end);
+        if(reach>=width-gapTolerance){full=true;break;}
+      }
+    }
+    if(full)result.push(row);
+  }
+  return result;
+}
