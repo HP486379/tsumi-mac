@@ -214,9 +214,24 @@ export class GameSim {
     // Test the entire translation, not only its endpoint: even a sub-4px
     // fragment must block movement. Input admits no positive penetration.
     const swept=rectVertices((x+nx)/2,e.body.position.y,W*CELL+Math.abs(nx-x),H*CELL,0);
-    if (this.overlapsAny(swept, e,0)) return false;
-    Body.setPosition(e.body, { x: nx, y: e.body.position.y });
-    this.targetX = nx;
+    let destination = nx;
+    if (this.overlapsAny(swept, e,0)) {
+      // Normal movement approaches the obstacle as closely as possible rather
+      // than discarding the entire 36px input. This is especially useful for
+      // upright thin M1/M2 minis; the collider and board stay unchanged.
+      const sign = Math.sign(nx - x);
+      let reached = x;
+      for (let d = FINE_MOVE_STEP_PX; d <= Math.abs(nx-x) + 1e-9; d += FINE_MOVE_STEP_PX) {
+        const candidate = x + sign * Math.min(d, Math.abs(nx-x));
+        const path = rectVertices((x+candidate)/2,e.body.position.y,W*CELL+Math.abs(candidate-x),H*CELL,0);
+        if (this.overlapsAny(path,e,0)) break;
+        reached = candidate;
+      }
+      destination = reached;
+      if (Math.abs(destination-x)<1e-9) return false;
+    }
+    Body.setPosition(e.body, { x: destination, y: e.body.position.y });
+    this.targetX = destination;
     this.cb.onSound?.('move', 1);
     return true;
   }
