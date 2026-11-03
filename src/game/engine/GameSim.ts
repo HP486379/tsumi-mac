@@ -204,82 +204,19 @@ export class GameSim {
     this.input.release(a);
   }
 
-  /**
-   * Snap upright classic minis to a narrow vertical channel near the intended
-   * 36px move. Evaluate both walls at the same height; combining unrelated
-   * edges from different rows creates false gaps.
-   */
-  private slotTarget(e: DeviceEntity, from: number, to: number, width: number, height: number): number | null {
-    if (this.mode !== 'classic' || (e.kind !== 'miniM1' && e.kind !== 'miniM2') ||
-        this.q % 2 !== 1 || this.input.held.has('fine')) return null;
-    const y = e.body.position.y;
-    const bodies = [...this.entities.values()].filter(other => other !== e);
-    const minX = width / 2, maxX = this.board.width - width / 2;
-    const direction = Math.sign(to - from);
-    let best: number | null = null;
-    let bestDistance = Infinity;
-    // Sample the actual vertical channel in 4px bands. Both boundaries
-    // must coexist at the same height, not merely somewhere in the pile.
-    for (let level = Math.max(y + height / 2, CELL); level < this.board.height; level += 4) {
-      const blockers = bodies.filter(b =>
-        b.body.bounds.min.y < level + 2 && b.body.bounds.max.y > level - 2)
-        .sort((a,b) => a.body.bounds.min.x - b.body.bounds.min.x);
-      const spans: Array<[number,number]> = [[0,0],...blockers.map(b =>
-        [Math.max(0,b.body.bounds.min.x),Math.min(this.board.width,b.body.bounds.max.x)] as [number,number]),[this.board.width,this.board.width]];
-      let reach = 0;
-      for (const [left,right] of spans) {
-        const gap = left - reach;
-        if (gap >= width + 0.5 && gap <= CELL + width) {
-          const cx = Math.max(minX,Math.min(maxX,(reach+left)/2));
-          if ((cx-from)*direction > 0 && Math.abs(cx-to) <= CELL/2) {
-            const sweep = rectVertices((from+cx)/2,y,width+Math.abs(cx-from),height,0);
-            if (!this.overlapsAny(sweep,e,0)) {
-              // Verify a meaningful downward segment fits this channel.
-              const probeY = Math.min(this.board.height-height/2,level);
-              const probe = rectVertices(cx,probeY,width,height,0);
-              if (!this.overlapsAny(probe,e,0)) {
-                const dist = Math.abs(cx-to);
-                if (dist < bestDistance) {best=cx;bestDistance=dist;}
-              }
-            }
-          }
-        }
-        reach=Math.max(reach,right);
-      }
-    }
-    return best;
-  }
-
   tryMove(dir: -1 | 1): boolean {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W,H } = this.worldDims(e, this.q),x=e.body.position.x;
-    const step=this.input.held.has('fine')?FINE_MOVE_STEP_PX:MOVE_STEP_PX;
+    const step=this.input.held.has('fine')?FINE_MOVE_STEP_PX:(this.mode==='classic'&&(e.kind==='miniM1'||e.kind==='miniM2')&&this.q%2===1)?12:MOVE_STEP_PX;
     const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+dir*step));
     if(Math.abs(nx-x)<1e-9)return false;
     // Test the entire translation, not only its endpoint: even a sub-4px
     // fragment must block movement. Input admits no positive penetration.
     const swept=rectVertices((x+nx)/2,e.body.position.y,W*CELL+Math.abs(nx-x),H*CELL,0);
-    let destination = nx;
-    const slot = this.slotTarget(e,x,nx,W*CELL,H*CELL);
-    if (slot !== null) destination = slot;
-    if (slot === null && this.overlapsAny(swept, e,0)) {
-      // Normal movement approaches the obstacle as closely as possible rather
-      // than discarding the entire 36px input. This is especially useful for
-      // upright thin M1/M2 minis; the collider and board stay unchanged.
-      const sign = Math.sign(nx - x);
-      let reached = x;
-      for (let d = FINE_MOVE_STEP_PX; d <= Math.abs(nx-x) + 1e-9; d += FINE_MOVE_STEP_PX) {
-        const candidate = x + sign * Math.min(d, Math.abs(nx-x));
-        const path = rectVertices((x+candidate)/2,e.body.position.y,W*CELL+Math.abs(candidate-x),H*CELL,0);
-        if (this.overlapsAny(path,e,0)) break;
-        reached = candidate;
-      }
-      destination = reached;
-      if (Math.abs(destination-x)<1e-9) return false;
-    }
-    Body.setPosition(e.body, { x: destination, y: e.body.position.y });
-    this.targetX = destination;
+    if (this.overlapsAny(swept,e,0)) return false;
+    Body.setPosition(e.body, { x: nx, y: e.body.position.y });
+    this.targetX = nx;
     this.cb.onSound?.('move', 1);
     return true;
   }
