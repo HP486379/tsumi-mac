@@ -16,9 +16,15 @@ function channel(s:GameSim,gap:number){
  const walls=[s.placeLocked('pro',(204-d.w*36)/36,y),s.placeLocked('pro',(204+gap)/36,y)];for(const e of walls)Matter.Body.setStatic(e.body,true);return walls;
 }
 describe.each(modes)('%s fine placement',mode=>{
- it.each(DEVICE_KINDS)('%s moves 36px from the actual post-rotation position at every quadrant',kind=>{
+ it.each(DEVICE_KINDS)('%s uses 12px for upright classic/count M1/M2 and 36px otherwise',kind=>{
   const s=sim(mode),e=spawn(s,kind);Matter.Body.setPosition(e.body,{x:s.board.width/2+1.375,y:260});
-  for(let q=0;q<4;q++){const before=e.body.position.x;expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before-36,9);expect(s.tryMove(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);expect(s.tryRotate(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);}
+  for(let q=0;q<4;q++){
+   const before=e.body.position.x;
+   const move=(mode!=='real'&&(kind==='miniM1'||kind==='miniM2')&&q%2===1)?12:36;
+   expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before-move,9);
+   expect(s.tryMove(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);
+   expect(s.tryRotate(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);
+  }
   s.destroy();
  });
  it('holds and releases with the same repeat timing, clamps the last fractional wall step',()=>{
