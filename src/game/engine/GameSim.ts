@@ -204,6 +204,44 @@ export class GameSim {
     this.input.release(a);
   }
 
+  /**
+   * Align upright classic M1/M2 minis with narrow slots below the falling
+   * piece. Only use actual body bounds: never shrink a collider or waive
+   * collision/row-clear requirements.
+   */
+  private slotTarget(e: DeviceEntity, from: number, to: number, width: number): number | null {
+    if (this.mode !== 'classic' || (e.kind !== 'miniM1' && e.kind !== 'miniM2') ||
+        this.q % 2 !== 1 || this.input.held.has('fine')) return null;
+    const y = e.body.position.y;
+    const edges: number[] = [0, this.board.width];
+    const bodies = [...this.entities.values()].filter(other =>
+      other !== e && other.body.bounds.max.y > y + CELL &&
+      other.body.bounds.min.y < this.board.height);
+    for (const other of bodies) {
+      edges.push(Math.max(0, Math.min(this.board.width, other.body.bounds.min.x)));
+      edges.push(Math.max(0, Math.min(this.board.width, other.body.bounds.max.x)));
+    }
+    const minX = width / 2, maxX = this.board.width - width / 2;
+    let best: number | null = null, bestDistance = Infinity;
+    for (const left of edges) for (const right of edges) {
+      const gap = right - left;
+      if (gap < width + 0.5 || gap > CELL + width) continue;
+      // A candidate slot must be bounded by obstacles (or a wall) on
+      // both sides, at roughly the same height in the stack.
+      const leftSide = left === 0 || bodies.some(b => Math.abs(b.body.bounds.max.x-left)<1);
+      const rightSide = right === this.board.width || bodies.some(b => Math.abs(b.body.bounds.min.x-right)<1);
+      if (!leftSide || !rightSide) continue;
+      const cx = Math.max(minX, Math.min(maxX, (left + right) / 2));
+      if ((cx-from) * Math.sign(to-from) <= 0 ||
+          Math.abs(cx-to) > CELL / 2) continue;
+      const swept = rectVertices((from+cx)/2,y,width+Math.abs(cx-from),e.wCells*CELL,0);
+      if (this.overlapsAny(swept,e,0)) continue;
+      const distance = Math.abs(cx-to);
+      if (distance < bestDistance) { best=cx; bestDistance=distance; }
+    }
+    return best;
+  }
+
   tryMove(dir: -1 | 1): boolean {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
@@ -215,7 +253,9 @@ export class GameSim {
     // fragment must block movement. Input admits no positive penetration.
     const swept=rectVertices((x+nx)/2,e.body.position.y,W*CELL+Math.abs(nx-x),H*CELL,0);
     let destination = nx;
-    if (this.overlapsAny(swept, e,0)) {
+    const slot = this.slotTarget(e,x,nx,W*CELL);
+    if (slot !== null) destination = slot;
+    if (slot === null && this.overlapsAny(swept, e,0)) {
       // Normal movement approaches the obstacle as closely as possible rather
       // than discarding the entire 36px input. This is especially useful for
       // upright thin M1/M2 minis; the collider and board stay unchanged.
