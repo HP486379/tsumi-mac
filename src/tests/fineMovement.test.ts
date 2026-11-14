@@ -67,8 +67,8 @@ it('keeps the classic full-row threshold for off-grid vertical minis and exact r
  for(let n=0;n<5;n++)s.placeLocked('miniM1',(288+14.4*(n+.5)-deviceCells('miniM1','classic').h*18)/36,16,1);
  expect(s.checkRows()).toBe(2);expect(s.score().spent).toBeCloseTo(s.score().cleared+s.score().fieldValue,4);expect(s.score().lines).toBe(2);s.destroy();
 });
-it('rejects an offset full-width row with a 4px edge hole instead of rounding it to the grid',()=>{
- const s=sim('classic');for(let c=0;c<10;c+=2)s.placeLocked('miniM4',c+4/36,17);expect(s.checkRows()).toBe(0);expect(s.score().lines).toBe(0);s.destroy();
+it('clears a nearly full-width row with a 4px edge gap',()=>{
+ const s=sim('classic');for(let c=0;c<10;c+=2)s.placeLocked('miniM4',c+4/36,17);expect(s.checkRows()).toBe(1);expect(s.score().lines).toBe(1);s.destroy();
 });
 
 
