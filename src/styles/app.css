@@ -249,8 +249,19 @@ button { font: inherit; color: inherit; }
 .touch-btn.fine-toggle.active { border-color:var(--accent); background:#284461; color:#fff; }
 @media (max-width:480px) { .touch-group.cl { gap:5px; } .touch-group.cl .touch-btn { width:48px; height:48px; } .touch-group.cl .fine-toggle { width:46px; min-width:46px; font-size:.75rem; } }
 
-/* Direct gestures replace mobile on-screen arrows; the HUD retains pause. */
+/* Direct gestures replace mobile on-screen arrows. In portrait, the
+   oblique panel MUST have an explicit grid row, otherwise its implicit
+   placement can shrink the playable stage to a narrow strip. */
 @media (hover: none) and (pointer: coarse) {
-  .game-screen { grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "stage stage"; }
   .game-screen .touch-group { display: none; }
+}
+@media (hover: none) and (pointer: coarse) and (max-aspect-ratio: 1/1) {
+  .game-screen {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "hud" "stage" "oblique";
+  }
+  .hud { min-width: 0; }
+  .stage { min-width: 0; min-height: 0; width: 100%; }
+  .side-panel { grid-area: oblique; min-width: 0; width: 100%; }
 }
