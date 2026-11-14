@@ -16,14 +16,20 @@ function channel(s:GameSim,gap:number){
  const walls=[s.placeLocked('pro',(204-d.w*36)/36,y),s.placeLocked('pro',(204+gap)/36,y)];for(const e of walls)Matter.Body.setStatic(e.body,true);return walls;
 }
 describe.each(modes)('%s fine placement',mode=>{
- it.each(DEVICE_KINDS)('%s uses 12px for upright classic/count M1/M2 and 36px otherwise',kind=>{
+ it.each(DEVICE_KINDS)('%s snaps to the correct movement lattice after rotation',kind=>{
   const s=sim(mode),e=spawn(s,kind);Matter.Body.setPosition(e.body,{x:s.board.width/2+1.375,y:260});
   for(let q=0;q<4;q++){
    const before=e.body.position.x;
-   const move=(mode!=='real'&&(kind==='miniM1'||kind==='miniM2')&&q%2===1)?12:36;
-   expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before-move,9);
-   expect(s.tryMove(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);
-   expect(s.tryRotate(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(before,9);
+   const upright=mode!=='real'&&(kind==='miniM1'||kind==='miniM2')&&q%2===1;
+   const lattice=upright?12:36;
+   const d=deviceCells(kind,mode),width=(q%2===1?d.h:d.w)*36;
+   const left=before-width/2;
+   const expectedLeft=(Math.round(left/lattice)-1)*lattice;
+   expect(s.tryMove(-1)).toBe(true);
+   expect(e.body.position.x).toBeCloseTo(expectedLeft+width/2,9);
+   expect(s.tryMove(1)).toBe(true);
+   expect(e.body.position.x).toBeCloseTo(Math.round(left/lattice)*lattice+width/2,9);
+   expect(s.tryRotate(1)).toBe(true);
   }
   s.destroy();
  });
@@ -67,12 +73,12 @@ it('rejects an offset full-width row with a 4px edge hole instead of rounding it
 
 
 describe.each(modes)('%s dual-speed controls',mode=>{
- it('moves 36px normally, 1px with fine held, and retains offset',()=>{
+ it('snaps to the grid normally, retains 1px fine control, then re-snaps',()=>{
   const s=sim(mode),e=spawn(s,'miniM1');Matter.Body.setPosition(e.body,{x:s.board.width/2,y:120});
   const start=e.body.position.x;
   expect(s.tryMove(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start+36,8);
   s.press('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start+35,8);
-  s.release('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start-1,8);
+  s.release('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start,8);
   s.destroy();
  });
 });
