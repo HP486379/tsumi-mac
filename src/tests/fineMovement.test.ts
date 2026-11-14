@@ -46,7 +46,7 @@ describe.each(['real','count'] as const)('%s fine placement',mode=>{
   if(s instanceof CountSim)expect(s.count()).toMatchObject({current:3,peak:3});s.destroy();
  });
  it.each(['miniM1','miniM2'] as const)('%s cannot descend into a 12px channel',kind=>{
-  const s=sim(mode);channel(s,12);const e=spawn(s,kind);s.tryRotate(1);const target=mode==='real'?210:212;
+  const s=sim(mode);channel(s,mode==='count'?11:12);const e=spawn(s,kind);s.tryRotate(1);const target=mode==='real'?210:212;
   s.press('fine');for(let n=0;n<200&&Math.abs(e.body.position.x-target)>.01;n++)s.tryMove(e.body.position.x>target?-1:1);s.release('fine');
   s.hardDrop();for(let i=0;i<1000&&s.active;i++)s.step();expect(e.state).toBe('locked');expect(Math.max(...e.body.vertices.map(v=>v.y))).toBeLessThan(s.board.height-100);s.destroy();
  });
