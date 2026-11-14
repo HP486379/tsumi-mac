@@ -1,4 +1,3 @@
-import { formatYen } from '../data/devices';
 import type { HighScore, Settings } from '../game/systems/highscore';
 import { SoundToggles } from './SoundToggles';
 
@@ -12,7 +11,7 @@ interface Props {
   onHowTo: () => void;
 }
 
-export function TitleScreen({ highScore, settings, onSettings, onStart, onRealStart,onCountStart,onHowTo }: Props) {
+export function TitleScreen({ settings, onSettings, onStart, onRealStart,onCountStart,onHowTo }: Props) {
   return (
     <main className="screen title-screen" data-testid="title-screen">
       <div className="title-stack" aria-hidden="true">
@@ -39,12 +38,6 @@ export function TitleScreen({ highScore, settings, onSettings, onStart, onRealSt
         </button>
       </div>
       <SoundToggles settings={settings} onChange={onSettings} />
-      <p className="mode-description">テトリスモード（旧通常）の記録</p>
-      <dl className="hiscore" data-testid="title-highscore">
-        <div><dt>最高散財額</dt><dd data-testid="hs-spent">{formatYen(highScore.bestSpent)}</dd></div>
-        <div><dt>最多整理行数</dt><dd>{highScore.bestLines}行</dd></div>
-        <div><dt>プレイ回数</dt><dd>{highScore.plays}回</dd></div>
-      </dl>
       <p className="disclaimer">
         本作は非公式のファンメイド・パロディゲームです。テトリス・最多積載モードのサイズと、全モードの質量・価格はゲーム用パラメータです。実寸モードは実機の寸法比を反映します。
         Mac、Mac mini、Mac Studio、Mac Pro は Apple Inc. の商標です。
