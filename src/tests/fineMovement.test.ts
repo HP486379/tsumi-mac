@@ -15,7 +15,7 @@ function channel(s:GameSim,gap:number){
  const d=deviceCells('pro',s.mode),y=(s.board.height-d.h*36)/36;
  const walls=[s.placeLocked('pro',(204-d.w*36)/36,y),s.placeLocked('pro',(204+gap)/36,y)];for(const e of walls)Matter.Body.setStatic(e.body,true);return walls;
 }
-describe.each(modes)('%s fine placement',mode=>{
+describe.each(['real','count'] as const)('%s fine placement',mode=>{
  it.each(DEVICE_KINDS)('%s snaps to the correct movement lattice after rotation',kind=>{
   const s=sim(mode),e=spawn(s,kind);Matter.Body.setPosition(e.body,{x:s.board.width/2+1.375,y:260});
   for(let q=0;q<4;q++){
@@ -72,7 +72,7 @@ it('clears a nearly full-width row with a 4px edge gap',()=>{
 });
 
 
-describe.each(modes)('%s dual-speed controls',mode=>{
+describe.each(['real','count'] as const)('%s dual-speed controls',mode=>{
  it('snaps to the grid normally, retains 1px fine control, then re-snaps',()=>{
   const s=sim(mode),e=spawn(s,'miniM1');Matter.Body.setPosition(e.body,{x:180,y:120});
   const start=e.body.position.x;
@@ -81,4 +81,17 @@ describe.each(modes)('%s dual-speed controls',mode=>{
   s.release('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start,8);
   s.destroy();
  });
+});
+
+it('classic mode ignores fine modifier and uses 36px or 12px grid steps',()=>{
+ const s=sim('classic'),e=spawn(s,'miniM1');
+ Matter.Body.setPosition(e.body,{x:180,y:120});
+ s.press('fine');
+ expect(s.tryMove(1)).toBe(true);
+ expect(e.body.position.x).toBeCloseTo(216,8);
+ expect(s.tryRotate(1)).toBe(true);
+ const before=e.body.position.x;
+ expect(s.tryMove(-1)).toBe(true);
+ expect(e.body.position.x).toBeCloseTo(before-12,8);
+ s.release('fine');s.destroy();
 });
