@@ -1,8 +1,8 @@
 /**
  * 登場デバイス定義。
- * サイズ・質量・価格はすべてゲーム用の架空パラメータであり、実製品の仕様・価格とは無関係。
+ * 質量・価格・摩擦などはゲーム用パラメータ。実寸（cm）の根拠は officialDimensions.ts を参照。
  */
-export type DeviceKind = 'miniM1' | 'miniM2' | 'miniM4' | 'studio' | 'pro';
+export type DeviceKind = 'miniM1' | 'miniM2' | 'miniM4' | 'studio' | 'pro' | 'macPro2013';
 
 export interface DeviceSpec {
   kind: DeviceKind;
@@ -30,6 +30,13 @@ export interface DeviceSpec {
   accent: string;
 }
 
+/**
+ * Mac Pro (Late 2013) の価格（暫定）。
+ * 根拠：Apple Japan の発売時プレスリリース記載の最小構成価格 318,800円。
+ * 既存機種はゲーム用の架空価格のため、既存体系への対応づけは未確定。変更はこの1か所で行う。
+ */
+export const MAC_PRO_2013_PRICE_YEN = 318_800;
+
 export const DEVICES: Record<DeviceKind, DeviceSpec> = {
   miniM1: {
     kind: 'miniM1', name: 'Mac mini M1', label: 'mini M1', w: 2, h: 1, mass: 1.2, price: 50_000,
@@ -52,13 +59,20 @@ export const DEVICES: Record<DeviceKind, DeviceSpec> = {
     body: '#c5cad1', bodyDark: '#8d949e', accent: '#ff9f6e',
   },
   pro: {
-    kind: 'pro', name: 'Mac Pro', label: 'Pro', w: 2, h: 4, mass: 7.0, price: 1_000_000,
+    // 2023年 M2 Ultra タワーとして扱う（2019年モデルと外観が共通で、イラストから世代は断定できない）
+    kind: 'pro', name: 'Mac Pro (2023)', label: 'Pro', w: 2, h: 4, mass: 7.0, price: 1_000_000,
     friction: 0.6, frictionStatic: 0.8, restitution: 0.02, weight: 9,
     body: '#b4bac3', bodyDark: '#767e8a', accent: '#ff6e8a',
   },
+  macPro2013: {
+    // 直径16.7cm×高さ25.1cm → 2×3セル（0.667、公式 0.665）。質量は公式 5.0kg
+    kind: 'macPro2013', name: 'Mac Pro (Late 2013)', label: 'Pro 2013', w: 2, h: 3, mass: 5.0, price: MAC_PRO_2013_PRICE_YEN,
+    friction: 0.4, frictionStatic: 0.55, restitution: 0.03, weight: 8,
+    body: '#2b2e35', bodyDark: '#0f1115', accent: '#c9ced8',
+  },
 };
 
-export const DEVICE_KINDS: DeviceKind[] = ['miniM1', 'miniM2', 'miniM4', 'studio', 'pro'];
+export const DEVICE_KINDS: DeviceKind[] = ['miniM1', 'miniM2', 'miniM4', 'studio', 'pro', 'macPro2013'];
 
 /** 高額デバイス（散財演出の対象）しきい値 */
 export const BIG_SPEND_THRESHOLD = 300_000;

@@ -1,0 +1,15 @@
+import { chromium } from '@playwright/test';
+import { mkdir,writeFile } from 'node:fs/promises';
+import path from 'node:path';
+const out=path.resolve(process.env.SURFACE_OUTPUT||'test-results/surfaces');await mkdir(out,{recursive:true});
+const label=process.argv[2]||'after';const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
+const page=await browser.newPage({viewport:{width:1060,height:620},deviceScaleFactor:2});
+const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+await page.goto('http://127.0.0.1:4173/tools/surface/view.html');await page.waitForFunction(()=>!!window.surfaceAudit);
+const data=await page.evaluate(()=>window.surfaceAudit);
+if(label!=='before'&&(data.audit.maxSurfaceGap>1e-9||data.audit.maxGroundGap>1e-9))throw Error('Actual surface/ground gap');
+if(errors.length)throw Error(errors.join('\n'));
+await page.screenshot({path:path.join(out,`${label}-surfaces.png`)});
+await writeFile(path.join(out,`${label}-surfaces.json`),JSON.stringify(data,null,2));
+console.log(JSON.stringify({label,surfaces:data.results.map(r=>({kind:r.kind,gap:r.actual.worldGap,depth:r.depth})),maxSurfaceGap:data.audit.maxSurfaceGap,maxGroundGap:data.audit.maxGroundGap,errors}));
+await browser.close();

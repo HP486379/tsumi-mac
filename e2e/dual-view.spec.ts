@@ -16,18 +16,24 @@ test('dual view uses the same live frame through movement, rotation, clearing an
     expect(pair.obliqueFrames).toBeGreaterThan(0);
   };
   await checkSync();
-  const yBeforeToggle = (await state(page)).activeY!;
+  // Test input isolation with the clock stopped: elapsed focus/layout time
+  // must not be mistaken for a Space hard drop on slower GPU runners.
+  await page.keyboard.press('KeyP');
+  const beforeToggle = await state(page);
   await page.getByTestId('oblique-panel').locator('summary').focus();
   await page.keyboard.press('Space');
   await expect(page.getByTestId('oblique-panel')).not.toHaveAttribute('open');
   await page.waitForTimeout(100);
-  expect((await state(page)).activeY! - yBeforeToggle).toBeLessThan(40);
+  expect((await state(page)).activeY).toBe(beforeToggle.activeY);
+  expect((await state(page)).steps).toBe(beforeToggle.steps);
+  expect((await state(page)).score.devices).toBe(beforeToggle.score.devices);
   await page.keyboard.press('Space');
   await checkSync();
   await page.getByTestId('oblique-panel').locator('summary').evaluate(el => (el as HTMLElement).blur());
+  await page.getByTestId('resume-button').click();
   const x = (await state(page)).activeX!;
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(36, 0);
+  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(4, 5);
   await checkSync();
   const q = (await state(page)).q;
   await page.keyboard.press('KeyX');
@@ -43,7 +49,7 @@ test('dual view uses the same live frame through movement, rotation, clearing an
   await page.getByTestId('pause-restart').click();
   await expect.poll(async () => (await state(page)).score.devices).toBe(1);
   await checkSync();
-  await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM2', c, 17); });
+  await page.evaluate(() => { for (let c = 0; c < 10; c += 2) window.__tsumimac!.placeLocked('miniM4', c, 17); });
   await expect.poll(async () => (await state(page)).score.lines).toBeGreaterThan(0);
   await checkSync();
   await page.keyboard.press('KeyP');
@@ -76,7 +82,7 @@ test('mobile folds the auxiliary view and keeps touch controls usable in both or
   }
   const x = (await state(page)).activeX!;
   await page.getByTestId('touch-left').tap();
-  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(36, 0);
+  await expect.poll(async () => x - (await state(page)).activeX!).toBeCloseTo(4, 5);
   await toggle.tap();
   await expect.poll(() => page.evaluate(() => window.__tsumimac!.views().oblique)).toBeNull();
   await page.getByTestId('touch-pause').tap();

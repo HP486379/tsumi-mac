@@ -1,4 +1,4 @@
-/** ゲーム全体の定数。論理座標系（360×648）で定義し、画面ピクセルとは分離する。 */
+/** 現行モードの定数。実寸モードの盤面寸法はboard.tsで分離し、画面ピクセルとも独立させる。 */
 export const COLS = 10;
 export const ROWS = 18;
 export const CELL = 36;
@@ -39,8 +39,13 @@ export const LINES_PER_LEVEL = 5;
 export const MAX_LEVEL = 15;
 
 /** 横移動のオートリピート（ms） */
+export const MOVE_STEP_PX = 36;
+/** Shift またはタッチ微調整中の横移動量 */
+export const FINE_MOVE_STEP_PX = 1;
+export const FINE_ARR_MS = 55;
 export const DAS_MS = 170;
-export const ARR_MS = 60;
+/** 通常は36pxの高速移動。微調整時は独立したリピート速度を使用。 */
+export const ARR_MS = 75;
 
 /** 壁の厚み（トンネリング防止のため厚くする） */
 export const WALL_THICKNESS = 240;

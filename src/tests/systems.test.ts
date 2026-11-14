@@ -85,7 +85,7 @@ describe('出現（Spawner）', () => {
       const sp = new Spawner(seed);
       const seen = new Set<string>();
       for (let i = 0; i < 14; i++) seen.add(sp.next().kind);
-      expect(seen.size).toBe(5);
+      expect(seen.size).toBe(6);
     }
   });
 

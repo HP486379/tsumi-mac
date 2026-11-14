@@ -1,7 +1,9 @@
 /** 入力アクション定義とキーボード割り当て */
-export type Action = 'left' | 'right' | 'rotateR' | 'rotateL' | 'soft' | 'hard' | 'pause';
+export type Action = 'left' | 'right' | 'rotateR' | 'rotateL' | 'soft' | 'hard' | 'pause' | 'fine';
 
 export const KEY_MAP: Record<string, Action> = {
+  ShiftLeft: 'fine',
+  ShiftRight: 'fine',
   ArrowLeft: 'left',
   ArrowRight: 'right',
   ArrowUp: 'rotateR',
@@ -27,8 +29,9 @@ export class InputState {
   repeating = false;
 
   press(a: Action): void {
-    if (this.held.has(a) && (a === 'left' || a === 'right' || a === 'soft')) return;
+    if (this.held.has(a) && (a === 'left' || a === 'right' || a === 'soft' || a === 'fine')) return;
     this.held.add(a);
+    if (a === 'fine') return;
     if (a === 'left' || a === 'right') {
       this.repeatDir = a;
       this.repeatTimer = 0;

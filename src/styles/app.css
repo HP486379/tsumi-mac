@@ -105,6 +105,9 @@ button { font: inherit; color: inherit; }
 .next-canvas { width: 56px; height: 36px; }
 .next-name { font-size: .6rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .pause-btn { min-height: 44px; min-width: 44px; padding: 0 10px; }
+.game-screen[data-mode="count"] .touch-group { gap:6px; }
+.game-screen[data-mode="count"] .touch-btn { width:44px; min-width:44px; height:48px; border-radius:12px; font-size:1.2rem; }
+.count-rules { color:var(--accent); font-size:.8rem; line-height:1.6; }
 .hud-item.lv .hud-value, .hud-item.lines .hud-value { font-size: .9rem; }
 
 .side-panel { display: none; }
@@ -212,6 +215,13 @@ button { font: inherit; color: inherit; }
 .oblique-panel summary span { font-size: .6rem; color: var(--accent); margin-left: 6px; }
 .oblique-surface { position: relative; aspect-ratio: 400 / 704; width: min(100%, 290px, calc((100dvh - 270px) * 400 / 704)); margin: auto; }
 .oblique-canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+.game-screen[data-mode="real"] .oblique-surface { width: min(100%, 300px, calc((100dvh - 270px) * .6)); }
+@media (min-aspect-ratio: 1/1) {
+  .game-screen[data-mode="real"] { grid-template-columns: minmax(150px, 1fr) minmax(0, 540px) minmax(180px, 1fr); }
+}
+@media (max-aspect-ratio: 1/1) {
+  .game-screen[data-mode="real"] .oblique-surface { width: auto; }
+}
 .oblique-note { margin: 4px 8px 8px; color: var(--muted); font-size: .65rem; line-height: 1.5; }
 .oblique-status { position: absolute; inset: 0; display: grid; place-items: center; background: #28000888; color: #fff; font-weight: 900; pointer-events: none; }
 .operation-guide { margin-top: 14px; }
@@ -233,3 +243,8 @@ button { font: inherit; color: inherit; }
   .oblique-surface { height: min(42dvh, 170px); max-height: none; width: auto; }
   .oblique-note { font-size: .55rem; }
 }
+
+/* タッチ操作の微調整切替 */
+.touch-btn.fine-toggle { width:54px; min-width:54px; height:48px; border-radius:12px; font-size:.85rem; }
+.touch-btn.fine-toggle.active { border-color:var(--accent); background:#284461; color:#fff; }
+@media (max-width:480px) { .touch-group.cl { gap:5px; } .touch-group.cl .touch-btn { width:48px; height:48px; } .touch-group.cl .fine-toggle { width:46px; min-width:46px; font-size:.75rem; } }

@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FrameViews } from '../game/rendering/frameViews';
 import { projectedDevice, projectPoint } from '../game/rendering/obliqueRenderer';
 import type { RenderItem, RenderState } from '../game/rendering/renderer';
-import { DEVICE_KINDS, DEVICES } from '../data/devices';
+import { DEVICE_KINDS } from '../data/devices';
+import { deviceCells } from '../data/gameModes';
 import { CELL, FIELD_H, FIELD_W } from '../game/config';
 
 const state = (): RenderState => ({ items: [], guide: null, dangerRatio: 0, floaters: [], flashes: [], shake: 0, timeMs: 0 });
@@ -37,7 +38,7 @@ describe('oblique geometry', () => {
     expect(middle.x).toBeCloseTo((top.x + bottom.x) / 2); expect(middle.y).toBeCloseTo((top.y + bottom.y) / 2);
   });
   it.each(DEVICE_KINDS)('preserves %s dimensions, rotation and source state', kind => {
-    const spec = DEVICES[kind];
+    const spec = deviceCells(kind,'classic');
     const item: RenderItem = { x: 180, y: 300, angle: Math.PI / 2, key: { kind, wCells: spec.w, hCells: spec.h, refurb: true, cutTop: false, cutBottom: false }, active: true };
     const before = JSON.stringify(item); const geometry = projectedDevice(item);
     expect(geometry.front[0]).toEqual(projectPoint(180 + spec.h * CELL / 2, 300 - spec.w * CELL / 2));

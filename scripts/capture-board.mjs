@@ -1,0 +1,34 @@
+import { chromium,devices } from '@playwright/test';
+import { mkdir,writeFile } from 'node:fs/promises';
+import path from 'node:path';
+const out=path.resolve(process.env.BOARD_OUTPUT||'test-results/board'),label=process.argv[2]||'after';
+const base=process.env.BOARD_URL||'http://localhost:4183';
+await mkdir(out,{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
+const reports=[];
+for(const mobile of [false,true]){
+ const context=await browser.newContext(mobile?{...devices['Pixel 7']}:{viewport:{width:1440,height:1000},deviceScaleFactor:1});
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto(base+'/?seed=20261028');await page.getByTestId('real-start-button').click();await page.waitForFunction(()=>!!window.__tsumimac);
+ await page.keyboard.press('KeyP');
+ await page.addStyleTag({content:'[data-testid="pause-overlay"],.toasts{visibility:hidden!important}'});
+ const board=await page.evaluate(()=>window.__tsumimac.state().board||{width:360,height:648,cols:10,rows:18});
+ await page.evaluate(b=>{const d=window.__tsumimac,scale=72/197,h=529*scale;
+   for(let i=0;i<3;i++)d.placeLocked('pro',b.cols-3,(b.height-h*(i+1))/36);
+   d.placeLocked('miniM1',0,(b.height-36*scale)/36);d.placeLocked('miniM2',0,(b.height-72*scale)/36);
+   d.placeLocked('miniM4',2.3,(b.height-50*scale)/36);d.placeLocked('studio',0,(b.height-167*scale)/36);
+   d.placeLocked('macPro2013',2.3,(b.height-301*scale)/36);
+ },board);
+ await page.keyboard.press('KeyP');
+ await page.waitForFunction(()=>window.__tsumimac.views().front?.items.length===9);
+ await page.keyboard.press('KeyP');
+ const panel=page.getByTestId('oblique-panel');if(await panel.getAttribute('open')===null)await panel.locator('summary').click();
+ const v=page.viewportSize();await page.setViewportSize({width:v.width,height:v.height-101});await page.waitForTimeout(150);
+ await page.addStyleTag({content:'[data-testid="pause-overlay"],.toasts{visibility:hidden!important}'});
+ await page.waitForFunction(()=>window.__tsumimac.views().synchronized);
+ const views=await page.evaluate(()=>window.__tsumimac.views());
+ if(views.front.items.length!==9||errors.length)throw Error('Incomplete fixture '+JSON.stringify(errors));
+ await page.screenshot({path:path.join(out,`${label}-${mobile?'mobile':'desktop'}.png`)});
+ reports.push({mobile,board,synchronized:views.synchronized,items:views.front.items,errors});await context.close();
+}
+await writeFile(path.join(out,`${label}.json`),JSON.stringify(reports,null,2));await browser.close();

@@ -4,8 +4,12 @@
  */
 import { CELL } from '../config';
 import { DEVICES, type DeviceKind } from '../../data/devices';
+import { drawMacPro2013Body } from './macPro2013Sprite';
+import type { FragmentGeometry,GameMode } from '../../data/gameModes';
 
 export interface SpriteKey {
+  mode?:GameMode;
+  geometry?:FragmentGeometry;
   kind: DeviceKind;
   wCells: number;
   hCells: number;
@@ -27,55 +31,46 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 /** ローカル座標（左上0,0、幅w・高さh、論理px）でデバイスを描く */
 export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void {
+  if(key.mode==='real'){drawRealDevice(ctx,key);return;}
+  if(key.kind==='miniM1'||key.kind==='miniM2'){drawThinClassicMini(ctx,key);return;}
   const spec = DEVICES[key.kind];
   const w = key.wCells * CELL;
   const h = key.hCells * CELL;
-  const pad = 1.2;
+  // The transferred M4 front reaches its collider's contact planes. Preserve
+  // the original inset for the other classic devices.
+  const pad = key.kind === 'miniM4' ? .1 : 1.2;
   const r = key.kind === 'pro' ? 7 : key.kind === 'studio' ? 8 : 6;
 
-  // 本体（アルミ風グラデーション）
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, spec.body);
-  g.addColorStop(1, spec.bodyDark);
-  roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, r);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.lineWidth = 1.4;
-  ctx.strokeStyle = 'rgba(20,24,30,0.75)';
-  ctx.stroke();
+  if (key.kind === 'macPro2013') {
+    // 黒い円筒：正面は円筒を真横から見たシルエット＋曲面の光沢（アルミ本体・上面ハイライトは描かない）
+    drawMacPro2013Body(ctx, w, h, CELL);
+  } else {
+    // 本体（アルミ風グラデーション）
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, spec.body);
+    g.addColorStop(1, spec.bodyDark);
+    roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, r);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.lineWidth = key.kind === 'miniM4' ? .2 : 1.4;
+    ctx.strokeStyle = 'rgba(20,24,30,0.75)';
+    ctx.stroke();
 
-  // 上面ハイライト
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
-  ctx.fill();
+    // 上面ハイライト
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    roundRect(ctx, pad + 3, pad + 2, w - pad * 2 - 6, Math.min(5, h * 0.12), 3);
+    ctx.fill();
+  }
 
   switch (key.kind) {
-    case 'miniM1':
-    case 'miniM2': {
-      // 薄型ボックス：底面の黒いベースとステータスLED
-      ctx.fillStyle = 'rgba(30,34,40,0.55)';
-      roundRect(ctx, w * 0.12, h - 8, w * 0.76, 5, 2);
-      ctx.fill();
-      ctx.fillStyle = spec.accent;
-      ctx.beginPath();
-      ctx.arc(w - 10, h * 0.45, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
     case 'miniM4': {
-      // 小型キューブ：前面ポート2つ
+      // Transferred classic M1/M2 body; USB-C openings and headphone
+      // jack use the same normalized locations as the solid renderer.
       ctx.fillStyle = 'rgba(30,34,40,0.6)';
-      for (let i = 0; i < Math.max(1, key.wCells); i++) {
-        const bx = i * CELL;
-        roundRect(ctx, bx + 9, h * 0.52, 5, 8, 2);
-        ctx.fill();
-        roundRect(ctx, bx + 17, h * 0.52, 5, 8, 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = spec.accent;
-      ctx.beginPath();
-      ctx.arc(w - 8, h * 0.3, 2, 0, Math.PI * 2);
-      ctx.fill();
+      for(const x of [-20/127,-1/127]){roundRect(ctx,w*(.5+x-3.85/127),h*.63-w*1.45/127,w*7.7/127,w*2.9/127,w*.65/127);ctx.fill();}
+      ctx.beginPath();ctx.arc(w*(.5+24/127),h*.63,w*1.75/127,0,Math.PI*2);ctx.fill();
+      roundRect(ctx,w*.12,h-8,w*.76,5,2);ctx.fill();
+      ctx.fillStyle='#def5e4';ctx.beginPath();ctx.arc(w*.85,h*.62,.6,0,Math.PI*2);ctx.fill();
       break;
     }
     case 'studio': {
@@ -128,11 +123,12 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
 
   // ラベル（製品ロゴではなく、ゲーム内の識別用テキスト）
   if (w >= 30 && h >= 24) {
-    ctx.fillStyle = 'rgba(25,28,34,0.8)';
+    // 黒い筐体では暗い文字が見えないため、Late 2013 だけ明るい文字にする
+    ctx.fillStyle = key.kind === 'macPro2013' ? 'rgba(220,226,236,0.85)' : 'rgba(25,28,34,0.8)';
     ctx.font = `bold ${key.kind === 'miniM4' ? 8 : 9}px system-ui, sans-serif`;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    const ly = key.kind === 'pro' ? Math.min(h - 6, h * 0.92) : h * 0.4;
+    const ly = key.kind === 'pro' ? Math.min(h - 6, h * 0.92) : key.kind === 'macPro2013' ? Math.min(h - 8, h * 0.82) : h * 0.4;
     ctx.fillText(spec.label, 6, ly);
   }
 
@@ -164,6 +160,39 @@ export function drawDevice(ctx: CanvasRenderingContext2D, key: SpriteKey): void 
   if (key.cutBottom) jag(h - 2.5, -1);
 }
 
+/** New thin classic front, in the same continuous pixels as its collider. */
+function drawThinClassicMini(ctx:CanvasRenderingContext2D,key:SpriteKey):void{
+ const w=key.wCells*CELL,h=key.hCells*CELL,spec=DEVICES[key.kind],g=ctx.createLinearGradient(0,0,0,h);
+ g.addColorStop(0,spec.body);g.addColorStop(1,spec.bodyDark);ctx.fillStyle=g;roundRect(ctx,.1,.1,w-.2,h-.2,Math.min(.45,h*.1));ctx.fill();
+ ctx.fillStyle='#ffffff55';ctx.fillRect(.8,.4,w-1.6,.35);ctx.fillStyle='#343a44';ctx.fillRect(w*.12,h-.75,w*.76,.6);
+ ctx.fillStyle=spec.accent;ctx.beginPath();ctx.arc(w*.85,h*.62,.6,0,Math.PI*2);ctx.fill();
+ if(h>=9){ctx.fillStyle='#26303a';ctx.font='6px system-ui,sans-serif';ctx.textBaseline='middle';ctx.fillText(spec.label,5,h*.5);}
+ if(key.refurb){ctx.fillStyle='#21a366';roundRect(ctx,w-10,.5,8,2,1);ctx.fill();}
+}
+
+/** Front projection in the same real-world XY coordinates as the collider. */
+function drawRealDevice(ctx:CanvasRenderingContext2D,key:SpriteKey):void {
+ const w=key.wCells*CELL,h=key.hCells*CELL;
+ if(key.kind==='macPro2013'){drawMacPro2013Body(ctx,w,h,CELL);return;}
+ const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#d2d6dc');g.addColorStop(1,'#a8aeb8');ctx.fillStyle=g;
+ roundRect(ctx,.15,.15,w-.3,h-.3,Math.min(1.2,h*.08));ctx.fill();
+ ctx.fillStyle='#4d535c';ctx.fillRect(w*.1,h-.7,w*.8,.55);
+ if(key.kind==='pro'){
+   ctx.fillStyle='#4e5661';for(let y=8;y<h-7;y+=4)for(let x=6+(Math.round(y/4)%2)*2;x<w-5;x+=4){ctx.beginPath();ctx.arc(x,y,1.15,0,Math.PI*2);ctx.fill();}
+   ctx.strokeStyle='#e4e6eb';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(w*.12,1);ctx.lineTo(w*.88,1);ctx.stroke();
+ } else {
+   ctx.fillStyle='#2a3039';
+   if(key.kind==='miniM4'||key.kind==='studio'){
+     const py=h*.63;
+     for(const x of [w*.23,w*.38]){roundRect(ctx,x,py-1,w*.065,1.5,.5);ctx.fill();}
+     if(key.kind==='miniM4'){ctx.beginPath();ctx.arc(w*.69,py,.65,0,Math.PI*2);ctx.fill();}
+     else ctx.fillRect(w*.52,py,w*.2,.7);
+   }
+   ctx.fillStyle='#e3f6e8';ctx.beginPath();ctx.arc(w*.85,h*.6,.55,0,Math.PI*2);ctx.fill();
+ }
+ if(key.refurb){ctx.fillStyle='#21a366';roundRect(ctx,w-10,1,8,3,1);ctx.fill();}
+}
+
 export class SpriteCache {
   private cache = new Map<string, HTMLCanvasElement>();
   private scale = 1;
@@ -176,7 +205,7 @@ export class SpriteCache {
   }
 
   get(key: SpriteKey): HTMLCanvasElement {
-    const id = `${key.kind}|${key.wCells}x${key.hCells}|${key.refurb ? 1 : 0}${key.cutTop ? 1 : 0}${key.cutBottom ? 1 : 0}`;
+    const id = `${key.mode??'classic'}|${key.kind}|${key.wCells}x${key.hCells}|${key.refurb ? 1 : 0}${key.cutTop ? 1 : 0}${key.cutBottom ? 1 : 0}`;
     let c = this.cache.get(id);
     if (!c) {
       c = document.createElement('canvas');
