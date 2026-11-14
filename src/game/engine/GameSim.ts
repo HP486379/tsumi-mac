@@ -37,6 +37,7 @@ export interface GameMessage {
 export interface SimCallbacks {
   onMessage?: (m: GameMessage) => void;
   onSound?: (name: SoundName, intensity: number) => void;
+  onHaptic?: (kind: 'place' | 'clear', strength: number) => void;
   onGameOver?: (reason: GameOverReason) => void;
 }
 
@@ -232,6 +233,22 @@ export class GameSim {
     return true;
   }
 
+  /** Move the falling Mac to a touch-derived board X, using the same swept
+   * collision guard as keyboard movement. Unlike keys, no lattice snap. */
+  tryMoveToX(requestedX: number): boolean {
+    const e = this.active;
+    if (!Number.isFinite(requestedX) || !e || e.state !== 'falling' || this.status !== 'running') return false;
+    const { W, H } = this.worldDims(e, this.q);
+    const x = e.body.position.x;
+    const nx = Math.max(W * CELL / 2, Math.min(this.board.width - W * CELL / 2, requestedX));
+    if (Math.abs(nx - x) < 0.25) return false;
+    const swept = rectVertices((x + nx) / 2, e.body.position.y, W * CELL + Math.abs(nx - x), H * CELL, 0);
+    if (this.overlapsAny(swept, e, 0)) return false;
+    Body.setPosition(e.body, { x: nx, y: e.body.position.y });
+    this.targetX = nx;
+    return true;
+  }
+
   tryRotate(dir: -1 | 1): boolean {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
@@ -378,6 +395,7 @@ export class GameSim {
     this.activeTicket = null;
     this.ledger.beginPlacement();
     this.cb.onSound?.('lock', 1);
+    this.cb.onHaptic?.('place', Math.min(1, 0.35 + DEVICES[a.kind].mass / 30));
     this.checkRows();
   }
 
@@ -473,6 +491,7 @@ export class GameSim {
     this.floaters.push({ text: '資産整理！', x: this.board.width / 2, y: midY - 14, life: 1.3, maxLife: 1.3, color: '#8affc1', size: 26, vy: -0.5 });
     this.floaters.push({ text: `+${formatYen(clearedYen)}`, x: this.board.width / 2, y: midY + 16, life: 1.3, maxLife: 1.3, color: '#ffffff', size: 15, vy: -0.5 });
     this.cb.onSound?.('clear', 1);
+    this.cb.onHaptic?.('clear', rows.length);
     this.cb.onMessage?.({ kind: 'clear', title: '資産整理！', detail: `${rows.length}行 / ${formatYen(clearedYen)}` });
     if (combo >= 2) {
       this.floaters.push({ text: `断捨離成功！ ×${combo}`, x: this.board.width / 2, y: midY - 48, life: 1.6, maxLife: 1.6, color: '#ff9f6e', size: 24, vy: -0.6 });
