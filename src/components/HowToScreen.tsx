@@ -30,7 +30,8 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
         <h3>操作</h3>
         <table className="keys">
           <tbody>
-            <tr><th>← →</th><td>左右4px移動（長押しで連続）</td></tr>
+            <tr><th>← →</th><td>テトリス：36px移動（M1/M2縦置きは12px）。実寸・最多積載：36px移動</td></tr>
+            <tr><th>Shift＋← →</th><td>実寸・最多積載のみ1px微調整</td></tr>
             <tr><th>↑ / X</th><td>右回転</td></tr>
             <tr><th>Z</th><td>左回転</td></tr>
             <tr><th>↓</th><td>高速落下</td></tr>
@@ -59,7 +60,7 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
             })}
           </tbody>
         </table>
-        <p className="note">サイズは36px単位。薄型のM1・M2は約13.16px高で、2層では1行に足りず、3層で整理できます。M4は従来のM1・M2と同じ72×36pxです。</p>
+        <p className="note">サイズは36px単位。薄型のM1・M2は12px高で、2層では1行に足りず、3層で整理できます。M4は従来のM1・M2と同じ72×36pxです。</p>
         <p className="note">イベント「新製品発表」で高額機が続けて入荷、「整備済製品入荷」で次の3台が15%オフになります。</p>
       </section>
       <button type="button" className="btn primary" data-testid="howto-back" onClick={onBack}>
