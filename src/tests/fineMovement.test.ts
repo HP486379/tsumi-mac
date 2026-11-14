@@ -92,6 +92,6 @@ it('classic mode ignores fine modifier and uses 36px or 12px grid steps',()=>{
  expect(s.tryRotate(1)).toBe(true);
  const before=e.body.position.x;
  expect(s.tryMove(-1)).toBe(true);
- expect(e.body.position.x).toBeCloseTo(before-12,8);
+ expect(e.body.position.x).toBeCloseTo((Math.round((before-6)/12)-1)*12+6,8);
  s.release('fine');s.destroy();
 });
