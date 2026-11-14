@@ -204,12 +204,14 @@ export class GameSim {
     this.input.release(a);
   }
 
+  protected allowsFineMovement(): boolean { return this.mode !== 'classic'; }
+
   tryMove(dir: -1 | 1): boolean {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W,H } = this.worldDims(e, this.q),x=e.body.position.x;
     const width=W*CELL;
-    const fine=this.mode!=='classic'&&this.input.held.has('fine');
+    const fine=this.allowsFineMovement()&&this.input.held.has('fine');
     const uprightMini=this.mode==='classic'&&(e.kind==='miniM1'||e.kind==='miniM2')&&this.q%2===1;
     const lattice=uprightMini?CELL/3:MOVE_STEP_PX;
     // Restore the original grid-anchored feel without changing any chassis
@@ -294,7 +296,7 @@ export class GameSim {
     }
     if (inp.repeatDir && inp.held.has(inp.repeatDir)) {
       inp.repeatTimer += STEP_MS;
-      const threshold = inp.repeating ? (this.mode!=='classic'&&inp.held.has('fine')?FINE_ARR_MS:ARR_MS) : DAS_MS;
+      const threshold = inp.repeating ? (this.allowsFineMovement()&&inp.held.has('fine')?FINE_ARR_MS:ARR_MS) : DAS_MS;
       if (inp.repeatTimer >= threshold) {
         inp.repeatTimer = 0;
         inp.repeating = true;
