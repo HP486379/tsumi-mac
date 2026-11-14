@@ -30,7 +30,7 @@ export function TitleScreen({ settings, onSettings, onStart, onRealStart,onCount
           テトリスモード
         </button>
         <button type="button" className="btn" data-testid="real-start-button" onClick={onRealStart}>実寸モード</button>
-        <small className="mode-description">540×900の広い盤面で実機の寸法比を再現。旧実寸モードの記録とは別に保存。</small>
+        <small className="mode-description">540×900の広い盤面で実機の寸法比を再現。テトリスモードとは別に記録を保存。</small>
         <button type="button" className="btn" data-testid="count-start-button" onClick={onCountStart}>最多積載台数チャレンジ</button>
         <small className="mode-description">行消しなし。崩れても続行！ 盤内に残るMacの最高台数に挑戦。</small>
         <button type="button" className="btn" data-testid="howto-button" onClick={onHowTo}>
