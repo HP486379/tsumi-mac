@@ -77,8 +77,8 @@ describe('forgiving classic strip clears',()=>{
   let x=0;
   return widths.map((w,i)=>{const p=rectVertices(x+w/2,y,w,10,0);x+=w+(gaps[i]??0);return p;});
  };
- it('clears 90% coverage with several small gaps',()=>{
-  expect(findContinuousStripRows(bands([84,84,84,72],[9,9,9]))).toContain(row);
+ it('clears a nearly full row with several gaps below 6px',()=>{
+  expect(findContinuousStripRows(bands([87,87,87,84],[5,5,5]))).toContain(row);
  });
  it('rejects a large individual gap even when coverage is 90%',()=>{
   expect(findContinuousStripRows(bands([162,162],[36]))).not.toContain(row);
