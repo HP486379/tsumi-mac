@@ -22,7 +22,7 @@ describe.each(modes)('%s fine placement',mode=>{
    const before=e.body.position.x;
    const upright=mode!=='real'&&(kind==='miniM1'||kind==='miniM2')&&q%2===1;
    const lattice=upright?12:36;
-   const d=deviceCells(kind,mode),width=(q%2===1?d.h:d.w)*36;
+   const d=deviceCells(kind,s.mode),width=(q%2===1?d.h:d.w)*36;
    const left=before-width/2;
    const expectedLeft=(Math.round(left/lattice)-1)*lattice;
    expect(s.tryMove(-1)).toBe(true);
@@ -74,7 +74,7 @@ it('rejects an offset full-width row with a 4px edge hole instead of rounding it
 
 describe.each(modes)('%s dual-speed controls',mode=>{
  it('snaps to the grid normally, retains 1px fine control, then re-snaps',()=>{
-  const s=sim(mode),e=spawn(s,'miniM1');Matter.Body.setPosition(e.body,{x:s.board.width/2,y:120});
+  const s=sim(mode),e=spawn(s,'miniM1');Matter.Body.setPosition(e.body,{x:180,y:120});
   const start=e.body.position.x;
   expect(s.tryMove(1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start+36,8);
   s.press('fine');expect(s.tryMove(-1)).toBe(true);expect(e.body.position.x).toBeCloseTo(start+35,8);
