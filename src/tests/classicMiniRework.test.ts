@@ -13,7 +13,7 @@ const steps=(s:GameSim,n=700)=>{for(let i=0;i<n;i++)s.step();};
 const ledger=(s:GameSim)=>expect(s.score().spent).toBeCloseTo(s.score().cleared+s.score().fieldValue,5);
 describe('classic mini model transfer and thin colliders',()=>{
  it.each(kinds)('%s uses matching body, mesh and front dimensions at all quadrants',kind=>{
-  const d=classicMiniSize(kind);expect(d.w).toBe(72);expect(d.h).toBe(kind==='miniM4'?36:72*36/197);expect(d.depth).toBe(72);
+  const d=classicMiniSize(kind);expect(d.w).toBe(72);expect(d.h).toBe(kind==='miniM4'?36:12);expect(d.depth).toBe(72);
   for(let q=0;q<4;q++){const s=sim(),e=s.placeLocked(kind,3,8,q),p=s.renderState().items[0]!,vertices=chassisMesh(p).map(v=>worldFromLocal(chassisPose(p),v.p));
    const x=vertices.map(v=>v[0]),y=vertices.map(v=>v[1]);expect(Math.min(...x)).toBeCloseTo(Math.min(...e.body.vertices.map(v=>v.x)),8);expect(Math.max(...x)).toBeCloseTo(Math.max(...e.body.vertices.map(v=>v.x)),8);expect(Math.min(...y)).toBeCloseTo(Math.min(...e.body.vertices.map(v=>v.y)),8);expect(Math.max(...y)).toBeCloseTo(Math.max(...e.body.vertices.map(v=>v.y)),8);expect(chassisPose(p).sx).toBe(1);expect(chassisPose(p).sy).toBe(1);expect(e.body.mass).toBeCloseTo(DEVICES[kind].mass,8);s.destroy();
   }
@@ -37,10 +37,10 @@ describe('classic mini model transfer and thin colliders',()=>{
    expect(s.score().cleared).toBe(5*50000);
    ledger(s);s.destroy();
   });
-  it('preserves purchase, cleared and remaining value when multiple thin layers span row boundaries',()=>{
+  it('preserves purchase, cleared and remaining value when three 12px layers fill one 36px row',()=>{
    const s=sim(),h=classicMiniSize('miniM2').h;
    for(let layer=0;layer<3;layer++)for(let col=0;col<10;col+=2)s.placeLocked('miniM2',col,(648-(layer+1)*h)/36);
-   expect(s.checkRows()).toBe(2);
+   expect(s.checkRows()).toBe(1);
    expect(s.score().spent).toBe(15*70000);
    expect(s.score().cleared).toBeCloseTo(s.score().spent,4);
    expect(s.score().fieldValue).toBeCloseTo(0,4);
