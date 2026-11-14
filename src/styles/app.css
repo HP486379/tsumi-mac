@@ -251,6 +251,6 @@ button { font: inherit; color: inherit; }
 
 /* Direct gestures replace mobile on-screen arrows; the HUD retains pause. */
 @media (hover: none) and (pointer: coarse) {
-  .game-screen { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "stage stage"; }
+  .game-screen { grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "stage stage"; }
   .game-screen .touch-group { display: none; }
 }
