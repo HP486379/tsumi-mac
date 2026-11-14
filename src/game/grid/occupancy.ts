@@ -127,7 +127,8 @@ export function findContinuousStripRows(polygons: Polygon[], grid: GridSpec = DE
   const result: number[] = [];
   const width = grid.cols * grid.cell;
   const minThickness = 2;
-  const gapTolerance = 0.75;
+  const gapTolerance = 12;
+  const minimumCoverage = 0.9;
   for (let row = 0; row < grid.rows; row++) {
     const top = row * grid.cell, bottom = top + grid.cell;
     const relevant = polygons.filter(p => {
@@ -154,12 +155,18 @@ export function findContinuousStripRows(polygons: Polygon[], grid: GridSpec = DE
         if(xs.length>=2)spans.push([Math.max(0,Math.min(...xs)),Math.min(width,Math.max(...xs))]);
       }
       spans.sort((a,b)=>a[0]-b[0]);
-      let reach=0;
+      let reach=0,covered=0,valid=true;
       for(const [start,end] of spans){
-        if(start>reach+gapTolerance)break;
-        reach=Math.max(reach,end);
-        if(reach>=width-gapTolerance){full=true;break;}
+        if(end<=reach)continue;
+        if(start>reach+gapTolerance){valid=false;break;}
+        const from=Math.max(reach,start);
+        covered+=Math.max(0,end-from);
+        reach=end;
       }
+      // Allow small gaps, but never let several small gaps collectively
+      // masquerade as a mostly full row.
+      if(valid&&width-reach<=gapTolerance&&covered>=width*minimumCoverage-1e-6)
+        full=true;
     }
     if(full)result.push(row);
   }
