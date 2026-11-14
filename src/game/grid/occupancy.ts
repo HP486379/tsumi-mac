@@ -127,7 +127,7 @@ export function findContinuousStripRows(polygons: Polygon[], grid: GridSpec = DE
   const result: number[] = [];
   const width = grid.cols * grid.cell;
   const minThickness = 2;
-  const gapTolerance = 12;
+  const gapTolerance = 6;
   const minimumCoverage = 0.9;
   for (let row = 0; row < grid.rows; row++) {
     const top = row * grid.cell, bottom = top + grid.cell;
