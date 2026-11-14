@@ -18,6 +18,7 @@ export class CountSim extends GameSim {
   this.spawnAutomatically=opts.autoSpawn??true;
   if(this.spawnAutomatically)this.spawnNext();
  }
+ protected override allowsFineMovement():boolean{return true;}
  count():CountSnapshot{return {current:this.counter.current,peak:this.counter.peak,blockedSeconds:this.blockedSeconds,timeoutSeconds:SPAWN_BLOCK_TIMEOUT_S};}
  override spawnNext(){
   if(this.active||this.status!=='running')return null;
