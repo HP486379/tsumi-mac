@@ -43,7 +43,7 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
             <tr><th>P / Esc</th><td>一時停止</td></tr>
           </tbody>
         </table>
-        <p>スマートフォンでは画面下のボタン（左・右・回転・高速落下・一時停止）で操作します。</p>
+        <p>スマートフォンでは盤面を左右にドラッグして移動、タップで回転、下スワイプで即落下します。一時停止は画面上部のボタンです。</p>
       </section>
       <section>
         <h3>登場デバイス（テトリスモード・架空パラメータ）</h3>
