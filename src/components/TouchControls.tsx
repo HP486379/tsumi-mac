@@ -5,6 +5,7 @@ interface Props {
   onPress: (a: Action) => void;
   onRelease: (a: Action) => void;
   hardDrop?:boolean;
+  allowFine?:boolean;
 }
 
 interface Btn { action: Action; label: string; aria: string; testId: string }
@@ -19,7 +20,7 @@ const RIGHT: Btn[] = [
 ];
 
 /** タッチ操作ボタン。pointer イベントで押下・解放を扱い、スクロールやズームを抑止する */
-export function TouchControls({ onPress, onRelease,hardDrop=false }: Props) {
+export function TouchControls({ onPress, onRelease,hardDrop=false,allowFine=true }: Props) {
   const [fine,setFine] = useState(false);
   const toggleFine=()=>{const next=!fine;setFine(next);if(next)onPress('fine');else onRelease('fine');};
   const handlers = (a: Action) => ({
@@ -47,7 +48,7 @@ export function TouchControls({ onPress, onRelease,hardDrop=false }: Props) {
   );
   return (
     <>
-      <div className="touch-group cl" data-testid="touch-left-group">{LEFT.map(render)}<button type="button" className={`touch-btn fine-toggle ${fine?'active':''}`} aria-label="微調整切替" aria-pressed={fine} data-testid="touch-fine-toggle" onClick={toggleFine}>{fine?'1px':'36px'}</button></div>
+      <div className="touch-group cl" data-testid="touch-left-group">{LEFT.map(render)}{allowFine&&<button type="button" className={`touch-btn fine-toggle ${fine?'active':''}`} aria-label="微調整切替" aria-pressed={fine} data-testid="touch-fine-toggle" onClick={toggleFine}>{fine?'1px':'36px'}</button>}</div>
       <div className="touch-group cr" data-testid="touch-right-group">
         {RIGHT.map(render)}
         {hardDrop&&render({action:'hard',label:'⤓',aria:'ハードドロップ',testId:'touch-hard'})}
