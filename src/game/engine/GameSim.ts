@@ -208,9 +208,18 @@ export class GameSim {
     const e = this.active;
     if (!e || e.state !== 'falling' || this.status !== 'running') return false;
     const { W,H } = this.worldDims(e, this.q),x=e.body.position.x;
-    const step=this.input.held.has('fine')?FINE_MOVE_STEP_PX:(this.mode==='classic'&&(e.kind==='miniM1'||e.kind==='miniM2')&&this.q%2===1)?12:MOVE_STEP_PX;
-    const nx=Math.max(W*CELL/2,Math.min(this.board.width-W*CELL/2,x+dir*step));
-    if(Math.abs(nx-x)<1e-9)return false;
+    const width=W*CELL;
+    const fine=this.input.held.has('fine');
+    const uprightMini=this.mode==='classic'&&(e.kind==='miniM1'||e.kind==='miniM2')&&this.q%2===1;
+    const lattice=uprightMini?CELL/3:MOVE_STEP_PX;
+    // Restore the original grid-anchored feel without changing any chassis
+    // dimensions. Thin upright M1/M2 pieces use a 12px sub-grid.
+    // Fine movement remains a relative 1px adjustment.
+    const left=x-width/2;
+    const nextLeft=fine?left+dir*FINE_MOVE_STEP_PX:
+      (Math.round(left/lattice)+dir)*lattice;
+    const nx=Math.max(width/2,Math.min(this.board.width-width/2,nextLeft+width/2));
+    if ((nx-x)*dir<=1e-9) return false;
     // Test the entire translation, not only its endpoint: even a sub-4px
     // fragment must block movement. Input admits no positive penetration.
     const swept=rectVertices((x+nx)/2,e.body.position.y,W*CELL+Math.abs(nx-x),H*CELL,0);
