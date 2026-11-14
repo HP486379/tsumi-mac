@@ -248,3 +248,9 @@ button { font: inherit; color: inherit; }
 .touch-btn.fine-toggle { width:54px; min-width:54px; height:48px; border-radius:12px; font-size:.85rem; }
 .touch-btn.fine-toggle.active { border-color:var(--accent); background:#284461; color:#fff; }
 @media (max-width:480px) { .touch-group.cl { gap:5px; } .touch-group.cl .touch-btn { width:48px; height:48px; } .touch-group.cl .fine-toggle { width:46px; min-width:46px; font-size:.75rem; } }
+
+/* Direct gestures replace mobile on-screen arrows; the HUD retains pause. */
+@media (hover: none) and (pointer: coarse) {
+  .game-screen { grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "stage stage"; }
+  .game-screen .touch-group { display: none; }
+}

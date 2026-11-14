@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { GameEngine, type EngineDebugApi, type HudState } from '../game/engine/GameEngine';
 import type { GameMessage } from '../game/engine/GameSim';
 import type { AudioManager } from '../game/systems/audio';
@@ -39,6 +39,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
   const obliqueRef = useRef<HTMLCanvasElement>(null);
   const obliqueSurfaceRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const pointerRef = useRef<{ id: number; x: number; y: number; activeX: number | null; dragged: boolean } | null>(null);
   const [hud, setHud] = useState<HudState | null>(null);
   const [paused, setPaused] = useState(false);
   const [collapse, setCollapse] = useState(false);
@@ -140,6 +141,41 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
     engineRef.current?.press(a);
   }, [audio]);
   const release = useCallback((a: Action) => engineRef.current?.release(a), []);
+  // Tap = rotate, horizontal drag = direct move, downward swipe = hard drop.
+  // Pointer capture keeps the gesture alive even if the finger leaves the canvas.
+  const onBoardDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (pointerRef.current || engineRef.current?.isPaused) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const activeX = engineRef.current?.activeX() ?? null;
+    pointerRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, activeX, dragged: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onBoardMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const p = pointerRef.current;
+    if (!p || p.id !== e.pointerId) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (Math.hypot(dx, dy) > 9) p.dragged = true;
+    if (!p.dragged || p.activeX === null || Math.abs(dx) < 9 || Math.abs(dx) < Math.abs(dy)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    engineRef.current?.moveActiveToX(p.activeX + dx * board.width / rect.width);
+  };
+  const onBoardEnd = (e: ReactPointerEvent<HTMLCanvasElement>, cancelled = false) => {
+    const p = pointerRef.current;
+    if (!p || p.id !== e.pointerId) return;
+    pointerRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (cancelled || engineRef.current?.isPaused) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (dy > 45 && dy > Math.abs(dx) * 1.3) {
+      press('hard');
+      release('hard');
+    } else if (!p.dragged) {
+      press('rotateR');
+      release('rotateR');
+    }
+  };
+
   const leave=()=>{const sim=engineRef.current?.sim;if(sim instanceof CountSim)saveCountPeak(sim.count().peak);onTitle();};
 
   return (
@@ -152,7 +188,11 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
             className="game-canvas"
             data-testid="game-canvas"
             style={{ width: size.width, height: size.height }}
-            aria-label="ゲームフィールド"
+            aria-label="ゲームフィールド：タップで回転、左右ドラッグで移動、下スワイプで即落下"
+            onPointerDown={onBoardDown}
+            onPointerMove={onBoardMove}
+            onPointerUp={onBoardEnd}
+            onPointerCancel={(e) => onBoardEnd(e, true)}
           />
           <div className="toasts" aria-live="polite">
             {toasts.map((t) => (

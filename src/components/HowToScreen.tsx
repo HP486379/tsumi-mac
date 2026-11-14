@@ -6,6 +6,10 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
   return (
     <main className="screen howto-screen" data-testid="howto-screen">
       <h2>遊び方</h2>
+      <section>
+        <h3>スマホ・マウスの直接操作</h3>
+        <p>盤面を左右になぞると落下中のMacが移動します。軽くタップ（クリック）すると90°回転、下方向にスワイプすると即落下します。iPhoneアプリの対応版では、積載確定と行消しで振動します。</p>
+      </section>
       <section><h3>3つのモード</h3><p>テトリスモードは360×648pxの盤面で、Macを積み上げながら行を消すモードです。実寸モードは540×900pxで実機の寸法比を再現します。</p><p>最多積載台数チャレンジは360×648px。行消しはなく、固定済みのMacを1台ずつ数えます。崩れても続行し、出現場所が連続3秒間塞がったときだけ終了します。操作中のMacは台数に含めず、完全に盤外へ落ちたMacは現在台数から除外します。最高台数の記録は減りません。</p></section>
       <section>
         <h3>テトリスモードのルール</h3>
@@ -39,7 +43,7 @@ export function HowToScreen({ onBack }: { onBack: () => void }) {
             <tr><th>P / Esc</th><td>一時停止</td></tr>
           </tbody>
         </table>
-        <p>スマートフォンでは画面下のボタン（左・右・回転・高速落下・一時停止）で操作します。</p>
+        <p>スマートフォンでは盤面を左右にドラッグして移動、タップで回転、下スワイプで即落下します。一時停止は画面上部のボタンです。</p>
       </section>
       <section>
         <h3>登場デバイス（テトリスモード・架空パラメータ）</h3>

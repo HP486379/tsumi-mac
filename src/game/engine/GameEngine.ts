@@ -15,6 +15,7 @@ import { Renderer, type RenderState } from '../rendering/renderer';
 import { FrameViews } from '../rendering/frameViews';
 import { ObliqueRenderer } from '../rendering/obliqueRenderer';
 import { AudioManager } from '../systems/audio';
+import { triggerHaptic } from '../systems/haptics';
 import { actionForKey, type Action } from '../systems/input';
 import type { ScoreSnapshot } from '../systems/scoring';
 import type { SpawnTicket, GameEventType } from '../systems/spawner';
@@ -92,6 +93,7 @@ export class GameEngine {
       {
         onMessage: (m) => this.cb.onMessage(m),
         onSound: (n, i) => this.audio.play(n, i),
+        onHaptic: (kind, strength) => triggerHaptic(kind, strength),
         onGameOver: (reason) => {
           if (this.overNotified) return;
           this.overNotified = true;
@@ -202,6 +204,16 @@ export class GameEngine {
     }
     if (this.paused) return;
     this.sim.press(a);
+  }
+
+  /** Direct touch movement in logical board coordinates. */
+  moveActiveToX(boardX: number): boolean {
+    if (this.paused || this.sim.status !== 'running') return false;
+    return this.sim.tryMoveToX(boardX);
+  }
+
+  activeX(): number | null {
+    return this.sim.active?.state === 'falling' ? this.sim.active.body.position.x : null;
   }
 
   release(a: Action): void {
