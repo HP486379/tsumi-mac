@@ -189,7 +189,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
         {mode==='count'&&<p className="count-rules">行消しなし。崩れても続行！ 赤線は終了条件ではありません。出現場所が3秒間塞がると終了します。</p>}
         <h3>操作</h3>
         <ul className="key-help">
-          <li><kbd>←</kbd><kbd>→</kbd> 36px移動（長押し可） / <kbd>Shift</kbd>＋左右 1px微調整</li>
+          <li><kbd>←</kbd><kbd>→</kbd> 36px移動（長押し可）{mode==='classic'?' / M1・M2縦置きは12px移動':<> / <kbd>Shift</kbd>＋左右 1px微調整</>}</li>
           <li><kbd>↑</kbd>/<kbd>X</kbd> 右回転 <kbd>Z</kbd> 左回転</li>
           <li><kbd>↓</kbd> 高速落下 <kbd>Space</kbd> ハードドロップ</li>
           <li><kbd>P</kbd>/<kbd>Esc</kbd> 一時停止</li>
@@ -199,7 +199,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
         </p>
         </div>
       </aside>
-      <TouchControls onPress={press} onRelease={release} hardDrop={mode==='count'} />
+      <TouchControls onPress={press} onRelease={release} hardDrop={mode==='count'} allowFine={mode!=='classic'} />
       {paused && !collapse && (
         <PauseOverlay
           settings={settings}
