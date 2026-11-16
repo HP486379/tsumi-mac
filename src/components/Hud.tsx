@@ -23,7 +23,7 @@ export function Hud({ hud, onPause,mode='classic',countBest }: { hud: HudState |
         <span className="hud-value" data-testid={countBest!==undefined?'count-current':'hud-spent'}>{countBest!==undefined?`${hud?.count?.current??0}台`:formatYen(s?.spent ?? 0)}</span>
       </div>
       <div className="hud-item index">
-        <span className="hud-label">{countBest!==undefined?'今回の最高積載台数':'積みMac指数'}</span>
+        <span className="hud-label">{countBest!==undefined?'今回の最高積載台数':'積みMax指数'}</span>
         <span className="hud-value" data-testid={countBest!==undefined?'count-peak':'hud-index'}>{countBest!==undefined?`${hud?.count?.peak??0}台`:formatYen(s?.fieldValue ?? 0)}</span>
       </div>
       <div className="hud-item small lv">

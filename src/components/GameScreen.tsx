@@ -204,7 +204,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           </div>
           {collapse && (
             <div className="collapse-overlay" data-testid="collapse-overlay">
-              <span>{mode==='count'?'積載チャレンジ終了':'積みMac崩壊'}</span>
+              <span>{mode==='count'?'積載チャレンジ終了':'積みMax崩壊'}</span>
             </div>
           )}
         </div>
@@ -220,7 +220,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           <div id="oblique-content">
             <div className="oblique-surface" style={{aspectRatio: `${view.width} / ${view.height}`}} ref={obliqueSurfaceRef}>
               <canvas ref={obliqueRef} className="oblique-canvas" data-testid="oblique-canvas" aria-label="正面と同期した斜めビュー（閲覧専用）" />
-              {collapse && <div className="oblique-status" data-testid="oblique-over">{mode==='count'?'出現場所が塞がりました':'積みMac崩壊'}</div>}
+              {collapse && <div className="oblique-status" data-testid="oblique-over">{mode==='count'?'出現場所が塞がりました':'積みMax崩壊'}</div>}
             </div>
             <p className="oblique-note">同じ状態を別の角度から表示。接触位置・操作は正面ビューで確認してください。</p>
           </div>
@@ -235,7 +235,7 @@ export function GameScreen({ audio, settings, onSettings, onGameOver, onTitle, s
           <li><kbd>P</kbd>/<kbd>Esc</kbd> 一時停止</li>
         </ul>
         <p className="combo-line" data-testid="hud-combo">
-          {mode==='count'?'固定されたMacを1台ずつ計測':<>コンボ {hud?.score.combo ?? 0} / 最大 {hud?.score.maxCombo ?? 0}</>}
+          {mode==='count'?'固定されたMaxを1台ずつ計測':<>コンボ {hud?.score.combo ?? 0} / 最大 {hud?.score.maxCombo ?? 0}</>}
         </p>
         </div>
       </aside>

@@ -21,8 +21,8 @@ export function TitleScreen({ settings, onSettings, onStart, onRealStart,onCount
         <div className="ts-box ts-m4" />
       </div>
       <h1 className="logo">
-        <span className="logo-ja">積みMac</span>
-        <span className="logo-en">STACK YOUR MAC</span>
+        <span className="logo-ja">積みMax</span>
+        <span className="logo-en">STACK YOUR MAX</span>
       </h1>
       <p className="catch">買って満足。積んで絶望。</p>
       <div className="menu">
@@ -32,7 +32,7 @@ export function TitleScreen({ settings, onSettings, onStart, onRealStart,onCount
         <button type="button" className="btn" data-testid="real-start-button" onClick={onRealStart}>実寸モード</button>
         <small className="mode-description">540×900の広い盤面で実機の寸法比を再現。テトリスモードとは別に記録を保存。</small>
         <button type="button" className="btn" data-testid="count-start-button" onClick={onCountStart}>最多積載台数チャレンジ</button>
-        <small className="mode-description">行消しなし。崩れても続行！ 盤内に残るMacの最高台数に挑戦。</small>
+        <small className="mode-description">行消しなし。崩れても続行！ 盤内に残るMaxの最高台数に挑戦。</small>
         <button type="button" className="btn" data-testid="howto-button" onClick={onHowTo}>
           遊び方
         </button>
@@ -40,7 +40,7 @@ export function TitleScreen({ settings, onSettings, onStart, onRealStart,onCount
       <SoundToggles settings={settings} onChange={onSettings} />
       <p className="disclaimer">
         本作は非公式のファンメイド・パロディゲームです。テトリス・最多積載モードのサイズと、全モードの質量・価格はゲーム用パラメータです。実寸モードは実機の寸法比を反映します。
-        Mac、Mac mini、Mac Studio、Mac Pro は Apple Inc. の商標です。
+        本作は独立して制作されたゲームであり、実在する企業による提携・後援・承認を受けたものではありません。
       </p>
     </main>
   );
