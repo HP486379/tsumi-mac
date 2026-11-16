@@ -42,3 +42,48 @@ function handleTsumimacMessage(event: WebViewMessageEvent) {
 - Webブラウザは非対応環境で無音・無振動でもゲームは動作
 
 ※ iOSの「システムの触覚」設定・端末状態によって実際の体感は異なります。
+
+## 追加: 直接ドラッグのグリッド境界フィードバック（積みMax Build 5）
+
+Webゲームは **直接横ドラッグで筐体の左端が36pxグリッド境界を越えたときだけ**
+`{type:'tsumimac:haptic',kind:'grid',strength:1}` を送ります。
+
+- 指の動きは従来どおり自由移動。**36pxへのスナップは行いません**。
+- 同じ36pxマス内では送信しない。左右どちらも対応。
+- 壁・他の筐体との衝突で移動できなかった場合は送信しない。
+- 高速スワイプで複数マスを一度に越えた場合は、連続振動で固まらないよう **1 pointer moveにつき1回** にまとめます。
+- キーボードや画面の左右ボタンは対象外。既存の配置確定・行消しの振動は変更しません。
+- PCブラウザやネイティブ受信処理がない環境では触覚フィードバックはありません。
+
+**重要：Expo側は別プロジェクトです。Web側のPRをマージしただけではiPhoneは振動しません。**
+
+Expo iOSラッパーの `react-native-webview` で、既存の `onMessage` の
+`tsumimac:haptic` 分岐に以下を追加してください。
+既存の `place`/`clear` 分岐を消したり、別の `onMessage` で上書きしたりしないでください。
+
+```tsx
+import * as Haptics from 'expo-haptics';
+
+// JSON.parse(event.nativeEvent.data) が成功し、
+// message.type === 'tsumimac:haptic' を確認した後:
+if (message.kind === 'grid') {
+  void Haptics.selectionAsync().catch(() => {});
+  return;
+}
+// existing place / clear processing follows...
+```
+
+Expoラッパーで `expo-haptics` が未導入なら
+`npx expo install expo-haptics` を実行します。
+
+TestFlight実機で、以下を確認してください。
+
+1. 右へゆっくり横ドラッグすると36px境界ごとに弱いクリック感がある
+2. 左へ戻しても同様にクリックする
+3. 同じマス内だけの微移動では振動しない
+4. 壁にぶつけて動かない状態で余分な振動が出ない
+5. タップ回転、下スワイプ落下、配置確定・行消しは従来どおり
+6. 低電力モードやiOSの触覚設定により、触感が弱い・再生されない場合がある
+
+ネイティブ表示名・アイコンを「積みMax」に変更する場合も、
+Expo設定と画像を変えたうえで新しい EAS Build が必要です。
