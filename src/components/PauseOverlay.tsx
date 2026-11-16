@@ -14,7 +14,7 @@ export function PauseOverlay({ settings, onSettings, onResume, onRestart, onTitl
     <div className="overlay pause-overlay" role="dialog" aria-modal="true" aria-label="一時停止" data-testid="pause-overlay">
       <div className="panel">
         <h2>一時停止中</h2>
-        <p className="sub">積みMacは逃げません（たぶん）</p>
+        <p className="sub">積みMaxは逃げません（たぶん）</p>
         <button type="button" className="btn primary big" data-testid="resume-button" onClick={onResume} autoFocus>
           再開する
         </button>
