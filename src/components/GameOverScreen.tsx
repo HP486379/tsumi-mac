@@ -25,19 +25,19 @@ export function GameOverScreen({ score, highScore, newRecord, onRetry, onTitle,m
   };
   return (
     <main className="screen result-screen" data-testid="result-screen">
-      <h2 className="collapse-title">積みMac崩壊</h2>
+      <h2 className="collapse-title">積みMax崩壊</h2>
       {mode==='real'&&<p data-testid="result-mode">実寸モード 540×900の記録</p>}
       {newRecord && <p className="new-record" data-testid="new-record">最高散財額を更新！</p>}
       <dl className="result-table">
         <div className="hl"><dt>散財総額</dt><dd data-testid="result-spent">{formatYen(score.spent)}</dd></div>
         <div><dt>整理額</dt><dd data-testid="result-cleared">{formatYen(score.cleared)}</dd></div>
-        <div><dt>積みMac指数</dt><dd data-testid="result-index">{formatYen(score.fieldValue)}</dd></div>
+        <div><dt>積みMax指数</dt><dd data-testid="result-index">{formatYen(score.fieldValue)}</dd></div>
         <div><dt>整理した行数</dt><dd data-testid="result-lines">{score.lines}行</dd></div>
         <div><dt>最大コンボ</dt><dd>{score.maxCombo}</dd></div>
         <div><dt>購入台数</dt><dd>{score.devices}台</dd></div>
         <div><dt>プレイ時間</dt><dd data-testid="result-time">{formatTime(score.timeMs)}</dd></div>
       </dl>
-      <p className="boot-line" data-testid="boot-line">起動したMac：0台</p>
+      <p className="boot-line" data-testid="boot-line">起動したMax：0台</p>
       <p className="best">最高散財額 {formatYen(highScore.bestSpent)}</p>
       <div className="menu">
         <button type="button" className="btn primary big" data-testid="retry-button" onClick={onRetry} autoFocus>
