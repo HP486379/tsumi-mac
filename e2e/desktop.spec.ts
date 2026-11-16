@@ -80,7 +80,7 @@ test.describe('PC（キーボード）', () => {
     await buildWall(page, 1);
     await expect(page.getByTestId('collapse-overlay')).toBeVisible({ timeout: 6000 });
     await expect(page.getByTestId('result-screen')).toBeVisible({ timeout: 6000 });
-    await expect(page.getByTestId('boot-line')).toHaveText('起動したMac：0台');
+    await expect(page.getByTestId('boot-line')).toHaveText('起動したMax：0台');
 
     await page.evaluate(() => { (navigator as { share?: unknown }).share = undefined; });
     await page.getByTestId('share-button').click();
@@ -92,7 +92,7 @@ test.describe('PC（キーボード）', () => {
       (navigator as { share?: unknown }).share = (d: ShareData) => { window.__shared = d; return Promise.resolve(); };
     });
     await page.getByTestId('share-button').click();
-    await expect.poll(() => page.evaluate(() => window.__shared?.text ?? '')).toContain('積みMac');
+    await expect.poll(() => page.evaluate(() => window.__shared?.text ?? '')).toContain('積みMax');
 
     await page.getByTestId('retry-button').click();
     await page.waitForFunction(() => window.__tsumimac?.state().active != null);
