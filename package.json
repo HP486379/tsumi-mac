@@ -2,7 +2,7 @@
   "name": "tsumimac",
   "private": true,
   "version": "1.0.0",
-  "description": "積みMac — STACK YOUR MAC : 買って満足。積んで絶望。",
+  "description": "積みMax — STACK YOUR MAX : 買って満足。積んで絶望。",
   "type": "module",
   "scripts": {
     "dev": "vite",

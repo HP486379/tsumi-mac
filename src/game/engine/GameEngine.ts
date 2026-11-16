@@ -16,6 +16,7 @@ import { FrameViews } from '../rendering/frameViews';
 import { ObliqueRenderer } from '../rendering/obliqueRenderer';
 import { AudioManager } from '../systems/audio';
 import { triggerHaptic } from '../systems/haptics';
+import { crossedGridBoundary } from '../systems/gridHaptics';
 import { actionForKey, type Action } from '../systems/input';
 import type { ScoreSnapshot } from '../systems/scoring';
 import type { SpawnTicket, GameEventType } from '../systems/spawner';
@@ -209,7 +210,16 @@ export class GameEngine {
   /** Direct touch movement in logical board coordinates. */
   moveActiveToX(boardX: number): boolean {
     if (this.paused || this.sim.status !== 'running') return false;
-    return this.sim.tryMoveToX(boardX);
+    const active = this.sim.active;
+    if (!active || active.state !== 'falling') return false;
+    const beforeLeft = active.body.bounds.min.x;
+    const moved = this.sim.tryMoveToX(boardX);
+    // React Native's iOS host turns this into a lightweight selection click.
+    // Failed moves, wall collisions and sub-cell motion must stay silent.
+    if (moved && crossedGridBoundary(beforeLeft, active.body.bounds.min.x)) {
+      triggerHaptic('grid', 1);
+    }
+    return moved;
   }
 
   activeX(): number | null {
