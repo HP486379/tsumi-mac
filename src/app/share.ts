@@ -9,15 +9,15 @@ export function formatTime(ms: number): string {
 
 export function buildShareText(s: ScoreSnapshot, url?: string): string {
   const lines = [
-    '【積みMac — STACK YOUR MAC】',
+    '【積みMax — STACK YOUR MAX】',
     '買って満足。積んで絶望。',
     `散財総額：${formatYen(s.spent)}`,
     `整理額：${formatYen(s.cleared)}`,
-    `積みMac指数：${formatYen(s.fieldValue)}`,
+    `積みMax指数：${formatYen(s.fieldValue)}`,
     `整理行数：${s.lines}行 / 最大コンボ：${s.maxCombo}`,
     `プレイ時間：${formatTime(s.timeMs)}`,
-    '起動したMac：0台',
-    '#積みMac',
+    '起動したMax：0台',
+    '#積みMax',
   ];
   if (url) lines.push(url);
   return lines.join('\n');
@@ -29,7 +29,7 @@ export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed';
 export async function shareText(text: string, nav: Navigator | undefined = typeof navigator !== 'undefined' ? navigator : undefined): Promise<ShareResult> {
   if (nav && typeof nav.share === 'function') {
     try {
-      await nav.share({ title: '積みMac — STACK YOUR MAC', text });
+      await nav.share({ title: '積みMax — STACK YOUR MAX', text });
       return 'shared';
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return 'cancelled';
