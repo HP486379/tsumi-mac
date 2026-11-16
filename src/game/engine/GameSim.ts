@@ -535,7 +535,7 @@ export class GameSim {
     this.overReason = reason;
     this.input.clear();
     this.cb.onSound?.('gameover', 1);
-    this.cb.onMessage?.({ kind: 'gameover', title: '積みMac崩壊', detail: reason === 'spawn' ? '置き場所がありません' : '積みすぎました' });
+    this.cb.onMessage?.({ kind: 'gameover', title: '積みMax崩壊', detail: reason === 'spawn' ? '置き場所がありません' : '積みすぎました' });
     this.cb.onGameOver?.(reason);
   }
 
