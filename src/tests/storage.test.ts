@@ -43,9 +43,9 @@ describe('ハイスコア保存（localStorage）', () => {
 describe('共有', () => {
   it('共有テキストに主要項目が入る', () => {
     const t = buildShareText(snap(1_234_567));
-    expect(t).toContain('積みMac');
+    expect(t).toContain('積みMax');
     expect(t).toContain('¥1,234,567');
-    expect(t).toContain('起動したMac：0台');
+    expect(t).toContain('起動したMax：0台');
   });
 
   it('Web Share API があれば使う', async () => {
