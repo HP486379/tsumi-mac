@@ -1,7 +1,7 @@
 /** Web-to-native haptic bridge. iOS Safari/WKWebView does not support
  * navigator.vibrate, so the native WebView host must handle these messages.
  * No haptics are emitted for incidental physics collisions. */
-export type HapticKind = 'place' | 'clear';
+export type HapticKind = 'place' | 'clear' | 'grid';
 
 interface NativeWindow extends Window {
   ReactNativeWebView?: { postMessage: (message: string) => void };
@@ -23,7 +23,7 @@ export function triggerHaptic(kind: HapticKind, strength: number): void {
     }
     // Android/other browsers only. iOS ignores vibrate().
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(kind === 'clear' ? (strength >= 2 ? [180, 60, 200] : 180) : 35);
+      navigator.vibrate(kind === 'grid' ? 10 : kind === 'clear' ? (strength >= 2 ? [180, 60, 200] : 180) : 35);
     }
   } catch {
     // Haptics are optional and must never interrupt gameplay.
